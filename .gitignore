@@ -56,3 +56,8 @@ package-.json
 README.MD
 package-lock.json
 tsconfig.json
+tsconfig.json
+app.json
+package-lock.json
+package.json
+tsconfig.json
