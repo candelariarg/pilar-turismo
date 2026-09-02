@@ -41,3 +41,18 @@ example
 # generated native folders
 /ios
 /android
+
+/.claude
+/.vscode
+/assets
+/components
+/constants
+/hooks
+/scripts
+AGENTS.md
+CLAUDE.md
+eslint.config.js
+package-.json
+README.MD
+package-lock.json
+tsconfig.json
