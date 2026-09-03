@@ -44,7 +44,7 @@ export default function PerfilScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF', // Fondo claro para no cansar la vista
+    backgroundColor: '#FFFFFF', // color de fondo claro para no cansar la vista
   },
   safeArea: {
     flex: 1,
