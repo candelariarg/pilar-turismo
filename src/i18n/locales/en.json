@@ -1,0 +1,75 @@
+{
+  "tabs": {
+    "home": "Home",
+    "map": "Map",
+    "weather": "Weather",
+    "profile": "Profile"
+  },
+  "home": {
+    "welcomeTitle": "Welcome to Pilar!",
+    "welcomeSubtitle": "Discover the history, gastronomy, and nature of our city",
+    "searchPlaceholder": "Search places, restaurants, events...",
+    "featuredSection": "Featured Places",
+    "categoriesSection": "Main Categories",
+    "upcomingEvents": "Upcoming Events",
+    "viewAll": "View all"
+  },
+  "map": {
+    "title": "Explore Pilar",
+    "searchPlaceholder": "Search point of interest...",
+    "categories": {
+      "all": "All",
+      "gastronomy": "Gastronomy",
+      "history": "History & Culture",
+      "nature": "Parks & Nature",
+      "lodging": "Lodging",
+      "entertainment": "Entertainment"
+    },
+    "placeDetails": {
+      "distance": "{{distance}} km away",
+      "schedule": "Opening hours",
+      "openNow": "Open now",
+      "closedNow": "Closed",
+      "getDirections": "Get directions",
+      "moreInfo": "More info"
+    }
+  },
+  "weather": {
+    "title": "Weather in Pilar",
+    "currentTemperature": "Current temperature",
+    "feelsLike": "Feels like",
+    "humidity": "Humidity",
+    "wind": "Wind",
+    "uvIndex": "UV Index",
+    "forecastTitle": "Forecast for upcoming days",
+    "alerts": {
+      "title": "Weather Alerts",
+      "noAlerts": "No active weather alerts for Pilar Region",
+      "rainAlert": "Chance of heavy rain today"
+    }
+  },
+  "profile": {
+    "title": "My Profile",
+    "userDefaultName": "Pilar Tourist",
+    "editProfile": "Edit Profile",
+    "changePhoto": "Change profile picture",
+    "settingsSection": "Settings",
+    "changeLanguage": "Change Language",
+    "currentLanguage": "English",
+    "weatherAlerts": "Weather Alerts",
+    "notifications": "Event Notifications",
+    "darkMode": "Dark Mode",
+    "logout": "Log Out",
+    "logoutConfirm": "Are you sure you want to log out?"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred. Please try again.",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "accept": "Accept",
+    "back": "Back",
+    "search": "Search"
+  }
+}

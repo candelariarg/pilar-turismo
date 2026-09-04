@@ -1,0 +1,75 @@
+{
+  "tabs": {
+    "home": "Inicio",
+    "map": "Mapa",
+    "weather": "Clima",
+    "profile": "Perfil"
+  },
+  "home": {
+    "welcomeTitle": "¡Bienvenido a Pilar!",
+    "welcomeSubtitle": "Descubre la historia, gastronomía y naturaleza de nuestra ciudad",
+    "searchPlaceholder": "Buscar lugares, restaurantes, eventos...",
+    "featuredSection": "Lugares Destacados",
+    "categoriesSection": "Categorías Principales",
+    "upcomingEvents": "Próximos Eventos",
+    "viewAll": "Ver todos"
+  },
+  "map": {
+    "title": "Explorar Pilar",
+    "searchPlaceholder": "Buscar punto de interés...",
+    "categories": {
+      "all": "Todos",
+      "gastronomy": "Gastronomía",
+      "history": "Historia y Cultura",
+      "nature": "Parques y Naturaleza",
+      "lodging": "Alojamiento",
+      "entertainment": "Entretenimiento"
+    },
+    "placeDetails": {
+      "distance": "A {{distance}} km de ti",
+      "schedule": "Horario de atención",
+      "openNow": "Abierto ahora",
+      "closedNow": "Cerrado",
+      "getDirections": "Cómo llegar",
+      "moreInfo": "Más información"
+    }
+  },
+  "weather": {
+    "title": "Clima en Pilar",
+    "currentTemperature": "Temperatura actual",
+    "feelsLike": "Sensación térmica",
+    "humidity": "Humedad",
+    "wind": "Viento",
+    "uvIndex": "Índice UV",
+    "forecastTitle": "Pronóstico para los próximos días",
+    "alerts": {
+      "title": "Alertas Meteorológicas",
+      "noAlerts": "No hay alertas activas para el Partido de Pilar",
+      "rainAlert": "Probabilidad de lluvias fuertes hoy"
+    }
+  },
+  "profile": {
+    "title": "Mi Perfil",
+    "userDefaultName": "Turista de Pilar",
+    "editProfile": "Editar Perfil",
+    "changePhoto": "Cambiar foto de perfil",
+    "settingsSection": "Configuración y Ajustes",
+    "changeLanguage": "Cambiar Idioma",
+    "currentLanguage": "Español",
+    "weatherAlerts": "Alertas Climáticas",
+    "notifications": "Notificaciones de Eventos",
+    "darkMode": "Modo Oscuro",
+    "logout": "Cerrar Sesión",
+    "logoutConfirm": "¿Estás seguro de que deseas cerrar sesión?"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Ocurrió un error. Inténtalo de nuevo.",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "accept": "Aceptar",
+    "back": "Volver",
+    "search": "Buscar"
+  }
+}
