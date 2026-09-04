@@ -1,7 +1,7 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/themed-view';
-import LugaresIniciales from '@/data/lugaresIniciales';
+import LugaresIniciales from '../data/lugaresIniciales';
 
 export default function HomeScreen() {
   return (
@@ -12,3 +12,6 @@ export default function HomeScreen() {
     </ThemedView>
   );
 }
+
+
+
