@@ -1,20 +1,43 @@
-import React from 'react';
-import { Text, View, StyleSheet, TouchableOpacity } from 'react-native';
+import React, {useState} from 'react';
+import { Text, View, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedView } from '@/components/themed-view';
+import * as ImagePicker from 'expo-image-picker';
 
-export default function PerfilScreen() {
+export default function PerfilScreen(){
+
+  const[imageUrl, setImageurl] = useState<string | null>(null);
+  const cambiarFotoPerfil = async ()=> {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();  
+  if (!permissionResult.granted) {
+    Alert.alert('Permiso no obtenido', 'Se requiere acceso a la galería.');
+    return;
+  }
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ['images'],
+    allowsEditing: true,
+    aspect: [1, 1],
+    quality: 0.8,
+  });
+
+  if (!result.canceled && result.assets && result.assets.length > 0) {
+    setImageurl(result.assets[0].uri);
+  };
+ };
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         
         {/* Encabezado Azul*/}
         <View style={styles.header}>
-          <View style={styles.avatarPlaceholder} />
+          <Image
+          source={{ uri: imageUrl || 'https://picsum.photos/200' }}
+          style={styles.avatarPlaceholder}
+            />
           <Text style={styles.nombreUsuario}>Nombre del Turista</Text>
           
           {/* Botón para integrar la cámara */}
-          <TouchableOpacity style={styles.botonFoto}>
+          <TouchableOpacity style={styles.botonFoto} onPress={cambiarFotoPerfil}>
             <Text style={styles.textoBotonFoto}>Cambiar foto de perfil</Text>
           </TouchableOpacity>
         </View>
