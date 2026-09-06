@@ -6,7 +6,7 @@ import LugaresIniciales from '@/data/lugaresIniciales';
 export default function HomeScreen() {
   return (
     <ThemedView style={{ flex: 1 }}>
-      <SafeAreaView style={{ flex: 1, padding: 16 }}>
+      <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
         <LugaresIniciales />
       </SafeAreaView>
     </ThemedView>
