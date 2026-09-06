@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, ListRenderItem } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, ListRenderItem, Image } from 'react-native';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../configuracion/FirebaseConfig';
 
@@ -45,6 +45,11 @@ const LugaresIniciales = () => {
 
   const renderItem: ListRenderItem<Lugar> = ({ item }) => (
     <View style={styles.card}>
+      <Image
+        source={{ uri: item.imagen_uri || 'https://picsum.photos/400/200' }}
+        style={styles.imagen}
+        resizeMode="cover"
+      />
       <Text style={styles.titulo}>{item.Nombre}</Text>
       <Text style={styles.direccion}>Ubicación: {item.Dirección}</Text>
       {item.Descripción ? <Text style={styles.descripcion}>{item.Descripción}</Text> : null}
@@ -74,7 +79,7 @@ const LugaresIniciales = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#5882ffff',
     padding: 10,
   },
   center: {
@@ -93,20 +98,29 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
+  imagen: {
+    width: '100%',
+    height: 180,
+    borderRadius: 8,
+    marginBottom: 10,
+    backgroundColor: '#e0e0e0',
+  },
   titulo: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#000000ff',
     marginBottom: 5,
   },
   direccion: {
     fontSize: 14,
-    color: '#666',
+    color: 'gray',
     marginBottom: 5,
+    
   },
+  
   descripcion: {
     fontSize: 14,
-    color: '#444',
+    color: 'gray',
   },
 });
 
