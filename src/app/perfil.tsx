@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import { Text, View, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ThemedView } from '@/components/themed-view';
+import { ThemedView } from '@/src/components/themed-view';
 import * as ImagePicker from 'expo-image-picker';
 
 export default function PerfilScreen(){

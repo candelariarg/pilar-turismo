@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import { IconSymbol } from '@/components/icon-symbol';
+import { IconSymbol } from '@/src/components/icon-symbol';
 
 SplashScreen.preventAutoHideAsync();
 
