@@ -17,6 +17,7 @@
   "map": {
     "title": "Explorar Pilar",
     "searchPlaceholder": "Buscar punto de interés...",
+    "location": "Ubicación",
     "categories": {
       "all": "Todos",
       "gastronomy": "Gastronomía",
@@ -50,9 +51,10 @@
   },
   "profile": {
     "title": "Mi Perfil",
-    "userDefaultName": "Turista de Pilar",
+    "userDefaultName": "Nombre del Turista",
     "editProfile": "Editar Perfil",
     "changePhoto": "Cambiar foto de perfil",
+    "changePassword": "Cambiar contraseña",
     "settingsSection": "Configuración y Ajustes",
     "changeLanguage": "Cambiar Idioma",
     "currentLanguage": "Español",

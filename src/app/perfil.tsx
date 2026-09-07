@@ -1,61 +1,73 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import { Text, View, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedView } from '@/src/components/themed-view';
 import * as ImagePicker from 'expo-image-picker';
+import { useTranslation } from 'react-i18next';
 
-export default function PerfilScreen(){
+export default function PerfilScreen() {
+  const { t, i18n } = useTranslation();
 
-  const[imageUrl, setImageurl] = useState<string | null>(null);
-  const cambiarFotoPerfil = async ()=> {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();  
-  if (!permissionResult.granted) {
-    Alert.alert('Permiso no obtenido', 'Se requiere acceso a la galería.');
-    return;
-  }
-  const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ['images'],
-    allowsEditing: true,
-    aspect: [1, 1],
-    quality: 0.8,
-  });
-
-  if (!result.canceled && result.assets && result.assets.length > 0) {
-    setImageurl(result.assets[0].uri);
+  const handleToggleLanguage = () => {
+    const nextLang = i18n.language.startsWith('es') ? 'en' : 'es';
+    i18n.changeLanguage(nextLang);
   };
- };
+
+  const [imageUrl, setImageurl] = useState<string | null>(null);
+
+  const cambiarFotoPerfil = async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissionResult.granted) {
+      Alert.alert(t('common.error'), 'Se requiere acceso a la galería.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      setImageurl(result.assets[0].uri);
+    }
+  };
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         
-        {/* Encabezado Azul*/}
+        {/* Encabezado Azul */}
         <View style={styles.header}>
           <Image
-          source={{ uri: imageUrl || 'https://picsum.photos/200' }}
-          style={styles.avatarPlaceholder}
-            />
-          <Text style={styles.nombreUsuario}>Nombre del Turista</Text>
+            source={{ uri: imageUrl || 'https://picsum.photos/200' }}
+            style={styles.avatarPlaceholder}
+          />
+          <Text style={styles.nombreUsuario}>{t('profile.userDefaultName')}</Text>
           
-          {/* Botón para integrar la cámara */}
+          {/* Botón para cambiar foto */}
           <TouchableOpacity style={styles.botonFoto} onPress={cambiarFotoPerfil}>
-            <Text style={styles.textoBotonFoto}>Cambiar foto de perfil</Text>
+            <Text style={styles.textoBotonFoto}>{t('profile.changePhoto')}</Text>
           </TouchableOpacity>
         </View>
 
         {/* Opciones de Ajustes */}
         <View style={styles.seccionAjustes}>
-          <TouchableOpacity style={styles.botonOpcion}>
-            <Text style={styles.textoOpcion}>Cambiar Idioma</Text>
+          <TouchableOpacity style={styles.botonOpcion} onPress={handleToggleLanguage}>
+            <Text style={styles.textoOpcion}>
+              {t('profile.changeLanguage')} ({t('profile.currentLanguage')})
+            </Text>
           </TouchableOpacity>
 
+          {/* Botón de cambio de contraseña */}
           <TouchableOpacity style={styles.botonOpcion}>
-            <Text style={styles.textoOpcion}>Alertas Climáticas</Text>
+            <Text style={styles.textoOpcion}>{t('profile.changePassword')}</Text>
           </TouchableOpacity>
         </View>
 
         {/* Botón de Cerrar Sesión */}
         <TouchableOpacity style={styles.botonSalir}>
-          <Text style={styles.textoSalir}>Cerrar Sesión</Text>
+          <Text style={styles.textoSalir}>{t('profile.logout')}</Text>
         </TouchableOpacity>
 
       </SafeAreaView>
@@ -63,18 +75,17 @@ export default function PerfilScreen(){
   );
 }
 
-// Estilos locales temporales 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF', // color de fondo claro para no cansar la vista
+    backgroundColor: '#FFFFFF',
   },
   safeArea: {
     flex: 1,
   },
   header: {
     alignItems: 'center',
-    backgroundColor: '#2196F3', // Azul brillante principal
+    backgroundColor: '#2196F3',
     paddingVertical: 40,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
@@ -96,7 +107,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   botonFoto: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)', // Fondo semitransparente
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     paddingHorizontal: 15,
     paddingVertical: 8,
     borderRadius: 20,
@@ -123,7 +134,7 @@ const styles = StyleSheet.create({
     padding: 15,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#fa1818', // Borde rojo para la acción de salir
+    borderColor: '#fa1818',
     borderRadius: 8,
     marginHorizontal: 20,
     marginBottom: 30,

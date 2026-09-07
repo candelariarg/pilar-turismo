@@ -17,6 +17,7 @@
   "map": {
     "title": "Explore Pilar",
     "searchPlaceholder": "Search point of interest...",
+    "location": "Location",
     "categories": {
       "all": "All",
       "gastronomy": "Gastronomy",
@@ -50,9 +51,10 @@
   },
   "profile": {
     "title": "My Profile",
-    "userDefaultName": "Pilar Tourist",
+    "userDefaultName": "Tourist Name",
     "editProfile": "Edit Profile",
     "changePhoto": "Change profile picture",
+    "changePassword": "Change Password",
     "settingsSection": "Settings",
     "changeLanguage": "Change Language",
     "currentLanguage": "English",

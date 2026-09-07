@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, ListRenderItem, Image } from 'react-native';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../configuracion/FirebaseConfig';
+import { useTranslation } from 'react-i18next';
 
-//Definimos la estructura de los datos según la base de datos
+// Definimos la estructura de los datos según la base de datos
 interface Lugar {
   id: string;
   Nombre: string;
@@ -13,6 +14,7 @@ interface Lugar {
 }
 
 const LugaresIniciales = () => {
+  const { t } = useTranslation();
   const [lugares, setLugares] = useState<Lugar[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -51,7 +53,7 @@ const LugaresIniciales = () => {
         resizeMode="cover"
       />
       <Text style={styles.titulo}>{item.Nombre}</Text>
-      <Text style={styles.direccion}>Ubicación: {item.Dirección}</Text>
+      <Text style={styles.direccion}>{t('map.location')}: {item.Dirección}</Text>
       {item.Descripción ? <Text style={styles.descripcion}>{item.Descripción}</Text> : null}
     </View>
   );
@@ -115,9 +117,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: 'gray',
     marginBottom: 5,
-    
   },
-  
   descripcion: {
     fontSize: 14,
     color: 'gray',
