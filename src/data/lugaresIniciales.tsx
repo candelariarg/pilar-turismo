@@ -46,7 +46,7 @@ const LugaresIniciales = () => {
   const renderItem: ListRenderItem<Lugar> = ({ item }) => (
     <View style={styles.card}>
       <Image
-        source={{ uri: item.imagen_uri || 'https://picsum.photos/400/200' }}
+        source={{ uri: item.imagen_uri || require('../../assets/images/lugaresIniciales/parroquia.jpg') }} // Ruta de la imagen por defecto
         style={styles.imagen}
         resizeMode="cover"
       />
