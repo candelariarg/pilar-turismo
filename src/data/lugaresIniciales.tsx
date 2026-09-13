@@ -46,9 +46,9 @@ const LugaresIniciales = () => {
   const renderItem: ListRenderItem<Lugar> = ({ item }) => (
     <View style={styles.card}>
       <Image
-        source={{ uri: item.imagen_uri || require('../../assets/images/lugaresIniciales/parroquia.jpg') }} // Ruta de la imagen por defecto
-        style={styles.imagen}
-        resizeMode="cover"
+      source={ item.imagen_uri ? { uri: item.imagen_uri } : require('../../assets/images/lugaresIniciales/parroquia.jpg') }
+      style={styles.imagen}
+      resizeMode="cover"
       />
       <Text style={styles.titulo}>{item.Nombre}</Text>
       <Text style={styles.direccion}>Ubicación: {item.Dirección}</Text>
