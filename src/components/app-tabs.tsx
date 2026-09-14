@@ -1,19 +1,23 @@
 import React from 'react';
 import { Image, Platform, StyleSheet } from 'react-native';
 import { Tabs } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useColorScheme } from '@/src/hooks/use-color-scheme';
 import { HapticTab } from '@/src/components/haptic-tab';
 
 export default function AppTabs() {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const isDark = colorScheme === 'dark';
 
   const activeColor = isDark ? '#FFFFFF' : '#208AEF';
   const inactiveColor = isDark ? '#8E8E93' : '#687076';
-  const barBackground = isDark ? '#121212' : '#FFFFFF';
-  const borderColor = isDark ? '#27272A' : '#E5E7EB';
+
+  // Calculamos la altura dinamica respetando el margen seguro inferior de Android/iOS (Safe Area)
+  const bottomPadding = insets.bottom > 0 ? insets.bottom : 8;
+  const tabHeight = (Platform.OS === 'ios' ? 60 : 56) + bottomPadding;
 
   return (
     <Tabs
@@ -26,9 +30,9 @@ export default function AppTabs() {
           backgroundColor: "#2196F3",
           borderTopColor: "#2196F3",
           borderTopWidth: 1,
-          height: Platform.OS === 'ios' ? 88 : 64,
+          height: tabHeight,
           paddingTop: 6,
-          paddingBottom: Platform.OS === 'ios' ? 28 : 8,
+          paddingBottom: bottomPadding,
           elevation: 8,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: -2 },
