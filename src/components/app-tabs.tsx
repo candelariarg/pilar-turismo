@@ -2,6 +2,7 @@ import React from 'react';
 import { Image, Platform, StyleSheet } from 'react-native';
 import { Tabs } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColorScheme } from '@/src/hooks/use-color-scheme';
 import { HapticTab } from '@/src/components/haptic-tab';
 
@@ -9,34 +10,42 @@ export default function AppTabs() {
   const { t } = useTranslation();
   const colorScheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const isDark = colorScheme === 'dark';
+  const insets = useSafeAreaInsets();
 
-  const activeColor = isDark ? '#FFFFFF' : '#208AEF';
-  const inactiveColor = isDark ? '#8E8E93' : '#687076';
-  const barBackground = isDark ? '#121212' : '#FFFFFF';
-  const borderColor = isDark ? '#27272A' : '#E5E7EB';
+  // Color de fondo de la barra y contraste óptimo
+  const barBackground = '#2196F3';
+  const borderTopColor = '#1E88E5';
+  const activeColor = '#FFFFFF';
+  const inactiveColor = 'rgba(255, 255, 255, 0.65)';
+
+  // Manejo dinámico de zona segura inferior (botones de Android, barra de gestos, Home bar de iOS)
+  const bottomInset = insets.bottom;
+  const paddingBottom = bottomInset > 0 ? bottomInset + 4 : 8;
+  const barHeight = 58 + bottomInset;
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
+        animation: 'shift',
         tabBarButton: HapticTab,
         tabBarActiveTintColor: activeColor,
         tabBarInactiveTintColor: inactiveColor,
         tabBarStyle: {
-          backgroundColor: "#2196F3",
-          borderTopColor: "#2196F3",
+          backgroundColor: barBackground,
+          borderTopColor: borderTopColor,
           borderTopWidth: 1,
-          height: Platform.OS === 'ios' ? 88 : 64,
+          height: barHeight,
           paddingTop: 6,
-          paddingBottom: Platform.OS === 'ios' ? 28 : 8,
+          paddingBottom: paddingBottom,
           elevation: 8,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: isDark ? 0.3 : 0.08,
+          shadowOpacity: 0.1,
           shadowRadius: 4,
         },
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: '600',
         },
       }}
@@ -46,12 +55,12 @@ export default function AppTabs() {
         name="index"
         options={{
           title: t('tabs.home'),
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ color }) => (
             <Image
               source={require('@/assets/iconos_barra/home.png')}
               style={[
                 styles.icon,
-                { tintColor: "#FFFFFF"},
+                { tintColor: color },
               ]}
               resizeMode="contain"
             />
@@ -64,12 +73,12 @@ export default function AppTabs() {
         name="explore"
         options={{
           title: t('tabs.map'),
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ color }) => (
             <Image
               source={require('@/assets/iconos_barra/map-pin.png')}
               style={[
                 styles.icon,
-                { tintColor: "#FFFFFF"},
+                { tintColor: color },
               ]}
               resizeMode="contain"
             />
@@ -82,12 +91,12 @@ export default function AppTabs() {
         name="clima"
         options={{
           title: t('tabs.weather'),
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ color }) => (
             <Image
               source={require('@/assets/iconos_barra/clima.png')}
               style={[
                 styles.icon,
-                { tintColor: "#FFFFFF"},
+                { tintColor: color },
               ]}
               resizeMode="contain"
             />
@@ -100,12 +109,12 @@ export default function AppTabs() {
         name="perfil"
         options={{
           title: t('tabs.profile'),
-          tabBarIcon: ({ color, focused }) => (
+          tabBarIcon: ({ color }) => (
             <Image
               source={require('@/assets/iconos_barra/user.png')}
               style={[
                 styles.icon,
-                { tintColor: "#FFFFFF"},
+                { tintColor: color },
               ]}
               resizeMode="contain"
             />
@@ -118,7 +127,7 @@ export default function AppTabs() {
 
 const styles = StyleSheet.create({
   icon: {
-    width: 24,
-    height: 24,
+    width: 22,
+    height: 22,
   },
 });
