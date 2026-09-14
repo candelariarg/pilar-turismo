@@ -51,7 +51,7 @@ export default function AppTabs() {
               source={require('@/assets/iconos_barra/home.png')}
               style={[
                 styles.icon,
-                { tintColor: color, opacity: focused ? 1 : 0.75 },
+                { tintColor: "#FFFFFF"},
               ]}
               resizeMode="contain"
             />
@@ -69,7 +69,7 @@ export default function AppTabs() {
               source={require('@/assets/iconos_barra/map-pin.png')}
               style={[
                 styles.icon,
-                { tintColor: color, opacity: focused ? 1 : 0.75 },
+                { tintColor: "#FFFFFF"},
               ]}
               resizeMode="contain"
             />
@@ -87,7 +87,7 @@ export default function AppTabs() {
               source={require('@/assets/iconos_barra/clima.png')}
               style={[
                 styles.icon,
-                { tintColor: color, opacity: focused ? 1 : 0.75 },
+                { tintColor: "#FFFFFF"},
               ]}
               resizeMode="contain"
             />
@@ -105,7 +105,7 @@ export default function AppTabs() {
               source={require('@/assets/iconos_barra/user.png')}
               style={[
                 styles.icon,
-                { tintColor: color, opacity: focused ? 1 : 0.75 },
+                { tintColor: "#FFFFFF"},
               ]}
               resizeMode="contain"
             />
