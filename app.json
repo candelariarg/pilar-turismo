@@ -34,7 +34,7 @@
         }
       ],
       "expo-image",
-      "expo-web-browser"
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true,

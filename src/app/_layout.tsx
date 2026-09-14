@@ -1,19 +1,18 @@
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import { useColorScheme } from 'react-native';
 
-import AppTabs from '@/components/app-tabs';
+// Inicializamos el motor i18n globalmente al arrancar
+import '@/src/i18n';
+
+// Importamos el componente de pestañas unificado
+import AppTabs from '@/src/components/app-tabs';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   useEffect(() => {
     SplashScreen.hideAsync();
   }, []);
 
-  return (
-    <AppTabs />
-  );
+  return <AppTabs />;
 }
