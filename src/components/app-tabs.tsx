@@ -13,8 +13,8 @@ export default function AppTabs() {
   const insets = useSafeAreaInsets();
 
   // Color de fondo de la barra y contraste óptimo
-  const barBackground = '#2196F3';
-  const borderTopColor = '#1E88E5';
+  const barBackground = '#0068B3';
+  const borderTopColor = '#0068B3';
   const activeColor = '#FFFFFF';
   const inactiveColor = 'rgba(255, 255, 255, 0.65)';
 
