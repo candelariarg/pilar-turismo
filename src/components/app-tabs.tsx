@@ -1,15 +1,12 @@
 import React from 'react';
-import { Image, Platform, StyleSheet } from 'react-native';
+import { Image, StyleSheet } from 'react-native';
 import { Tabs } from 'expo-router';
-import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useColorScheme } from '@/src/hooks/use-color-scheme';
+import { useTranslation } from 'react-i18next';
 import { HapticTab } from '@/src/components/haptic-tab';
 
 export default function AppTabs() {
   const { t } = useTranslation();
-  const colorScheme = useColorScheme() === 'dark' ? 'dark' : 'light';
-  const isDark = colorScheme === 'dark';
   const insets = useSafeAreaInsets();
 
   // Color de fondo de la barra y contraste óptimo
