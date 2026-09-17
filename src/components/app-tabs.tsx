@@ -52,12 +52,12 @@ export default function AppTabs() {
         name="index"
         options={{
           title: t('tabs.home'),
-          tabBarIcon: ({ color }) => (
+          tabBarIcon: () => (
             <Image
               source={require('@/assets/iconos_barra/home.png')}
               style={[
                 styles.icon,
-                { tintColor: color },
+                { tintColor: activeColor },
               ]}
               resizeMode="contain"
             />
@@ -70,12 +70,12 @@ export default function AppTabs() {
         name="explore"
         options={{
           title: t('tabs.map'),
-          tabBarIcon: ({ color }) => (
+          tabBarIcon: () => (
             <Image
               source={require('@/assets/iconos_barra/map-pin.png')}
               style={[
                 styles.icon,
-                { tintColor: color },
+                { tintColor: activeColor },
               ]}
               resizeMode="contain"
             />
@@ -88,12 +88,12 @@ export default function AppTabs() {
         name="clima"
         options={{
           title: t('tabs.weather'),
-          tabBarIcon: ({ color }) => (
+          tabBarIcon: () => (
             <Image
               source={require('@/assets/iconos_barra/clima.png')}
               style={[
                 styles.icon,
-                { tintColor: color },
+                { tintColor: activeColor },
               ]}
               resizeMode="contain"
             />
@@ -106,12 +106,12 @@ export default function AppTabs() {
         name="perfil"
         options={{
           title: t('tabs.profile'),
-          tabBarIcon: ({ color }) => (
+          tabBarIcon: () => (
             <Image
               source={require('@/assets/iconos_barra/user.png')}
               style={[
                 styles.icon,
-                { tintColor: color },
+                { tintColor: activeColor },
               ]}
               resizeMode="contain"
             />
