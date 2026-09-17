@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { ThemedView } from '@/src/components/themed-view';
+import { SwipeableScreen } from '@/src/components/swipeable-screen';
 
 const { width } = Dimensions.get('window');
 
@@ -115,196 +116,198 @@ export default function ExploreScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
+      <SwipeableScreen currentTab="explore">
+        <SafeAreaView style={styles.safeArea} edges={['top']}>
 
-        {/* header Superior con Búsqueda */}
-        <View style={styles.header}>
-          <View style={styles.searchBar}>
-            <Ionicons name="search" size={20} color="#666" style={{ marginRight: 8 }} />
-            <Text style={styles.searchText}>Buscar en Pilar (Ej: Hospitales, SUM)...</Text>
-            <TouchableOpacity style={styles.gpsButton}>
-              <Ionicons name="locate" size={18} color="#2196F3" />
-            </TouchableOpacity>
-          </View>
-
-          {/* carrucel de filtro  */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtrosContainer}>
-            <TouchableOpacity
-              style={[styles.chip, categoriaSel === 'todos' && styles.chipActivo]}
-              onPress={() => setCategoriaSel('todos')}
-            >
-              <Text style={[styles.chipText, categoriaSel === 'todos' && styles.chipTextActivo]}>🗺️ Todos</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.chip, categoriaSel === 'hospital' && styles.chipActivo]}
-              onPress={() => setCategoriaSel('hospital')}
-            >
-              <Text style={[styles.chipText, categoriaSel === 'hospital' && styles.chipTextActivo]}>🏥 Hospitales</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.chip, categoriaSel === 'comisaria' && styles.chipActivo]}
-              onPress={() => setCategoriaSel('comisaria')}
-            >
-              <Text style={[styles.chipText, categoriaSel === 'comisaria' && styles.chipTextActivo]}>👮 Comisarías</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.chip, categoriaSel === 'sum' && styles.chipActivo]}
-              onPress={() => setCategoriaSel('sum')}
-            >
-              <Text style={[styles.chipText, categoriaSel === 'sum' && styles.chipTextActivo]}>🏛️ SUM / Salud</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.chip, categoriaSel === 'supermercado' && styles.chipActivo]}
-              onPress={() => setCategoriaSel('supermercado')}
-            >
-              <Text style={[styles.chipText, categoriaSel === 'supermercado' && styles.chipTextActivo]}>🛒 Supermercados</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.chip, categoriaSel === 'turismo' && styles.chipActivo]}
-              onPress={() => setCategoriaSel('turismo')}
-            >
-              <Text style={[styles.chipText, categoriaSel === 'turismo' && styles.chipTextActivo]}>⛪ Turismo</Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </View>
-
-        {/* ares de  Visual Simulado */}
-        <View style={styles.mapArea}>
-          <View style={styles.mapCanvas}>
-            <View style={[styles.street, { top: '45%', width: '100%', height: 16 }]} />
-            <View style={[styles.street, { left: '45%', height: '100%', width: 16 }]} />
-            <View style={[styles.streetDiagonal, { top: '20%', left: '10%', width: '80%', height: 10 }]} />
-            
-            <View style={styles.riverArea}>
-              <Text style={styles.riverText}>Río Luján - Pilar</Text>
-            </View>
-
-            <View style={[styles.userGpsPin, { top: '50%', left: '44%' }]}>
-              <View style={styles.userPulse} />
-              <Ionicons name="navigate-circle" size={32} color="#2196F3" />
-            </View>
-
-            {lugaresFiltrados.map((lugar) => {
-              const esSeleccionado = lugarSeleccionado?.id === lugar.id;
-              return (
-                <TouchableOpacity
-                  key={lugar.id}
-                  style={[
-                    styles.markerPin,
-                    {
-                      top: `${lugar.coordenadasSimuladas.top}%`,
-                      left: `${lugar.coordenadasSimuladas.left}%`,
-                      backgroundColor: lugar.color,
-                      transform: [{ scale: esSeleccionado ? 1.25 : 1 }],
-                      zIndex: esSeleccionado ? 10 : 2,
-                    },
-                  ]}
-                  onPress={() => {
-                    setLugarSeleccionado(lugar);
-                    setModoRuta(false);
-                  }}
-                >
-                  <MaterialCommunityIcons name={lugar.icono as any} size={18} color="#FFF" />
-                </TouchableOpacity>
-              );
-            })}
-
-            {modoRuta && lugarSeleccionado && (
-              <View style={styles.routeOverlay}>
-                <View style={styles.routeLine} />
-                <View style={styles.routeBanner}>
-                  <Ionicons name="navigate-outline" size={20} color="#FFF" />
-                  <Text style={styles.routeBannerText}>
-                    En 200m gire a la derecha por Av. Tratado de Pilar
-                  </Text>
-                </View>
-              </View>
-            )}
-          </View>
-        </View>
-
-        {/* Tarjeta Inferior con la Información del Lugar Seleccionado */}
-        {lugarSeleccionado && (
-          <View style={styles.cardInfo}>
-            <View style={styles.cardHeader}>
-              <View style={{ flex: 1 }}>
-                <View style={[styles.badgeCategory, { backgroundColor: lugarSeleccionado.color + '22' }]}>
-                  <Text style={[styles.badgeText, { color: lugarSeleccionado.color }]}>
-                    {lugarSeleccionado.categoriaText}
-                  </Text>
-                </View>
-                <Text style={styles.cardTitle}>{lugarSeleccionado.nombre}</Text>
-                <Text style={styles.cardAddress}>📍 {lugarSeleccionado.direccion}</Text>
-              </View>
-              <TouchableOpacity
-                style={styles.closeCardButton}
-                onPress={() => setLugarSeleccionado(null)}
-              >
-                <Ionicons name="close-circle" size={24} color="#999" />
+          {/* header Superior con Búsqueda */}
+          <View style={styles.header}>
+            <View style={styles.searchBar}>
+              <Ionicons name="search" size={20} color="#666" style={{ marginRight: 8 }} />
+              <Text style={styles.searchText}>Buscar en Pilar (Ej: Hospitales, SUM)...</Text>
+              <TouchableOpacity style={styles.gpsButton}>
+                <Ionicons name="locate" size={18} color="#2196F3" />
               </TouchableOpacity>
             </View>
 
-            <View style={styles.metricsRow}>
-              <View style={styles.metricItem}>
-                <Ionicons name="map-outline" size={18} color="#2196F3" />
-                <Text style={styles.metricValue}>{lugarSeleccionado.distancia}</Text>
-                <Text style={styles.metricLabel}>Distancia</Text>
+            {/* carrucel de filtro  */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtrosContainer}>
+              <TouchableOpacity
+                style={[styles.chip, categoriaSel === 'todos' && styles.chipActivo]}
+                onPress={() => setCategoriaSel('todos')}
+              >
+                <Text style={[styles.chipText, categoriaSel === 'todos' && styles.chipTextActivo]}>🗺️ Todos</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.chip, categoriaSel === 'hospital' && styles.chipActivo]}
+                onPress={() => setCategoriaSel('hospital')}
+              >
+                <Text style={[styles.chipText, categoriaSel === 'hospital' && styles.chipTextActivo]}>🏥 Hospitales</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.chip, categoriaSel === 'comisaria' && styles.chipActivo]}
+                onPress={() => setCategoriaSel('comisaria')}
+              >
+                <Text style={[styles.chipText, categoriaSel === 'comisaria' && styles.chipTextActivo]}>👮 Comisarías</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.chip, categoriaSel === 'sum' && styles.chipActivo]}
+                onPress={() => setCategoriaSel('sum')}
+              >
+                <Text style={[styles.chipText, categoriaSel === 'sum' && styles.chipTextActivo]}>🏛️ SUM / Salud</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.chip, categoriaSel === 'supermercado' && styles.chipActivo]}
+                onPress={() => setCategoriaSel('supermercado')}
+              >
+                <Text style={[styles.chipText, categoriaSel === 'supermercado' && styles.chipTextActivo]}>🛒 Supermercados</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.chip, categoriaSel === 'turismo' && styles.chipActivo]}
+                onPress={() => setCategoriaSel('turismo')}
+              >
+                <Text style={[styles.chipText, categoriaSel === 'turismo' && styles.chipTextActivo]}>⛪ Turismo</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+
+          {/* ares de  Visual Simulado */}
+          <View style={styles.mapArea}>
+            <View style={styles.mapCanvas}>
+              <View style={[styles.street, { top: '45%', width: '100%', height: 16 }]} />
+              <View style={[styles.street, { left: '45%', height: '100%', width: 16 }]} />
+              <View style={[styles.streetDiagonal, { top: '20%', left: '10%', width: '80%', height: 10 }]} />
+              
+              <View style={styles.riverArea}>
+                <Text style={styles.riverText}>Río Luján - Pilar</Text>
               </View>
 
-              <View style={styles.metricDivider} />
-
-              <View style={styles.metricItem}>
-                <Ionicons name="time-outline" size={18} color="#2196F3" />
-                <Text style={styles.metricValue}>{lugarSeleccionado.tiempo}</Text>
-                <Text style={styles.metricLabel}>Tiempo est.</Text>
+              <View style={[styles.userGpsPin, { top: '50%', left: '44%' }]}>
+                <View style={styles.userPulse} />
+                <Ionicons name="navigate-circle" size={32} color="#2196F3" />
               </View>
 
-              <View style={styles.metricDivider} />
+              {lugaresFiltrados.map((lugar) => {
+                const esSeleccionado = lugarSeleccionado?.id === lugar.id;
+                return (
+                  <TouchableOpacity
+                    key={lugar.id}
+                    style={[
+                      styles.markerPin,
+                      {
+                        top: `${lugar.coordenadasSimuladas.top}%`,
+                        left: `${lugar.coordenadasSimuladas.left}%`,
+                        backgroundColor: lugar.color,
+                        transform: [{ scale: esSeleccionado ? 1.25 : 1 }],
+                        zIndex: esSeleccionado ? 10 : 2,
+                      },
+                    ]}
+                    onPress={() => {
+                      setLugarSeleccionado(lugar);
+                      setModoRuta(false);
+                    }}
+                  >
+                    <MaterialCommunityIcons name={lugar.icono as any} size={18} color="#FFF" />
+                  </TouchableOpacity>
+                );
+              })}
 
-              <View style={styles.metricItem}>
-                <Ionicons name="car-outline" size={18} color="#2196F3" />
-                <Text style={styles.metricValue}>Auto / Colectivo</Text>
-                <Text style={styles.metricLabel}>Transporte</Text>
-              </View>
-            </View>
-
-            <View style={styles.actionButtonsRow}>
-              {!modoRuta ? (
-                <TouchableOpacity
-                  style={styles.btnPrimary}
-                  onPress={() => setModoRuta(true)}
-                >
-                  <Ionicons name="navigate" size={18} color="#FFF" style={{ marginRight: 6 }} />
-                  <Text style={styles.btnPrimaryText}>Trazar Ruta</Text>
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity
-                  style={styles.btnSuccess}
-                  onPress={() => alert('¡Navegación GPS Iniciada para la Expo!')}
-                >
-                  <Ionicons name="play-circle" size={20} color="#FFF" style={{ marginRight: 6 }} />
-                  <Text style={styles.btnPrimaryText}>Iniciar Navegación</Text>
-                </TouchableOpacity>
-              )}
-
-              {modoRuta && (
-                <TouchableOpacity
-                  style={styles.btnSecondary}
-                  onPress={() => setModoRuta(false)}
-                >
-                  <Text style={styles.btnSecondaryText}>Cancelar Ruta</Text>
-                </TouchableOpacity>
+              {modoRuta && lugarSeleccionado && (
+                <View style={styles.routeOverlay}>
+                  <View style={styles.routeLine} />
+                  <View style={styles.routeBanner}>
+                    <Ionicons name="navigate-outline" size={20} color="#FFF" />
+                    <Text style={styles.routeBannerText}>
+                      En 200m gire a la derecha por Av. Tratado de Pilar
+                    </Text>
+                  </View>
+                </View>
               )}
             </View>
           </View>
-        )}
 
-      </SafeAreaView>
+          {/* Tarjeta Inferior con la Información del Lugar Seleccionado */}
+          {lugarSeleccionado && (
+            <View style={styles.cardInfo}>
+              <View style={styles.cardHeader}>
+                <View style={{ flex: 1 }}>
+                  <View style={[styles.badgeCategory, { backgroundColor: lugarSeleccionado.color + '22' }]}>
+                    <Text style={[styles.badgeText, { color: lugarSeleccionado.color }]}>
+                      {lugarSeleccionado.categoriaText}
+                    </Text>
+                  </View>
+                  <Text style={styles.cardTitle}>{lugarSeleccionado.nombre}</Text>
+                  <Text style={styles.cardAddress}>📍 {lugarSeleccionado.direccion}</Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.closeCardButton}
+                  onPress={() => setLugarSeleccionado(null)}
+                >
+                  <Ionicons name="close-circle" size={24} color="#999" />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.metricsRow}>
+                <View style={styles.metricItem}>
+                  <Ionicons name="map-outline" size={18} color="#2196F3" />
+                  <Text style={styles.metricValue}>{lugarSeleccionado.distancia}</Text>
+                  <Text style={styles.metricLabel}>Distancia</Text>
+                </View>
+
+                <View style={styles.metricDivider} />
+
+                <View style={styles.metricItem}>
+                  <Ionicons name="time-outline" size={18} color="#2196F3" />
+                  <Text style={styles.metricValue}>{lugarSeleccionado.tiempo}</Text>
+                  <Text style={styles.metricLabel}>Tiempo est.</Text>
+                </View>
+
+                <View style={styles.metricDivider} />
+
+                <View style={styles.metricItem}>
+                  <Ionicons name="car-outline" size={18} color="#2196F3" />
+                  <Text style={styles.metricValue}>Auto / Colectivo</Text>
+                  <Text style={styles.metricLabel}>Transporte</Text>
+                </View>
+              </View>
+
+              <View style={styles.actionButtonsRow}>
+                {!modoRuta ? (
+                  <TouchableOpacity
+                    style={styles.btnPrimary}
+                    onPress={() => setModoRuta(true)}
+                  >
+                    <Ionicons name="navigate" size={18} color="#FFF" style={{ marginRight: 6 }} />
+                    <Text style={styles.btnPrimaryText}>Trazar Ruta</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.btnSuccess}
+                    onPress={() => alert('¡Navegación GPS Iniciada para la Expo!')}
+                  >
+                    <Ionicons name="play-circle" size={20} color="#FFF" style={{ marginRight: 6 }} />
+                    <Text style={styles.btnPrimaryText}>Iniciar Navegación</Text>
+                  </TouchableOpacity>
+                )}
+
+                {modoRuta && (
+                  <TouchableOpacity
+                    style={styles.btnSecondary}
+                    onPress={() => setModoRuta(false)}
+                  >
+                    <Text style={styles.btnSecondaryText}>Cancelar Ruta</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+          )}
+
+        </SafeAreaView>
+      </SwipeableScreen>
     </ThemedView>
   );
 }

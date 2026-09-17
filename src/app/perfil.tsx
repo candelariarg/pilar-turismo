@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedView } from '@/src/components/themed-view';
 import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
+import { SwipeableScreen } from '@/src/components/swipeable-screen';
 
 export default function PerfilScreen() {
   const { t, i18n } = useTranslation();
@@ -35,7 +36,8 @@ export default function PerfilScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
+      <SwipeableScreen currentTab="perfil">
+        <SafeAreaView style={styles.safeArea} edges={['top']}>
         
         {/* Encabezado Azul */}
         <View style={styles.header}>
@@ -71,6 +73,7 @@ export default function PerfilScreen() {
         </TouchableOpacity>
 
       </SafeAreaView>
+      </SwipeableScreen>
     </ThemedView>
   );
 }
