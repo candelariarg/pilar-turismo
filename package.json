@@ -3,6 +3,7 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
+    "@ai-sdk/deepseek": "^3.0.56",
     "@expo/ui": "~57.0.18",
     "@expo/vector-icons": "^15.0.2",
     "expo": "^57.0.24",
