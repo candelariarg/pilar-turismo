@@ -14,6 +14,9 @@ import { ThemedView } from '@/src/components/themed-view';
 // Nuestro mapa Leaflet (100% gratis, sin Google, sin API Keys)
 import LeafletMap from '@/src/components/leaflet-map';
 
+// Componente para deslizar pantallas
+import { SwipeableScreen } from '@/src/components/swipeable-screen';
+
 // Nuestro cerebro (el Hook)
 import { useMaps } from '@/src/hooks/useMaps';
 import { PlaceCategory } from '../servicios/map/type';

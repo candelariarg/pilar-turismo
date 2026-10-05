@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { View, StyleSheet, PanResponder, StyleProp, ViewStyle } from 'react-native';
-import { useNavigation, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
 
 export type TabRouteName = 'index' | 'explore' | 'clima' | 'perfil';
 
