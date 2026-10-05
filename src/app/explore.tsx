@@ -51,7 +51,8 @@ export default function ExploreScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
+      <SwipeableScreen currentTab="explore">
+        <SafeAreaView style={styles.safeArea} edges={['top']}>
 
         {/* HEADER Y FILTROS */}
         <View style={styles.header}>
@@ -173,7 +174,8 @@ export default function ExploreScreen() {
           </View>
         )}
 
-      </SafeAreaView>
+        </SafeAreaView>
+      </SwipeableScreen>
     </ThemedView>
   );
 }
