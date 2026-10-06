@@ -11,13 +11,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedView } from '@/src/components/themed-view';
 
-// Nuestro mapa Leaflet (100% gratis, sin Google, sin API Keys)
+//  mapa Leaflet 
 import LeafletMap from '@/src/components/leaflet-map';
 
-// Componente para deslizar pantallas
+//  deslizar pantallas
 import { SwipeableScreen } from '@/src/components/swipeable-screen';
 
-// Nuestro cerebro (el Hook)
+// componente de el Hook
 import { useMaps } from '@/src/hooks/useMaps';
 import { PlaceCategory } from '../servicios/map/type';
 
