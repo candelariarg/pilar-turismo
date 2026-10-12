@@ -2,7 +2,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/src/components/themed-view';
 import { SwipeableScreen } from '@/src/components/swipeable-screen';
-import LugaresIniciales from '../menu_scroll/lugaresIniciales';
+import LugaresIniciales from '@/src/menu_scroll/listaLugares';
 
 export default function HomeScreen() {
   return (
