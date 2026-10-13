@@ -13,6 +13,7 @@ import {
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../configuracion/FirebaseConfig';
 import { useTranslation } from 'react-i18next';
+import { imagenesLugares, imagenPorDefecto } from './configImagenes';
 
 //obtenemos el ancho de la pantalla para darle un tamaño proporcional a las tarjetas
 const { width } = Dimensions.get('window');
@@ -22,6 +23,7 @@ interface Lugar {
   Nombre: string;
   Dirección: string;
   Descripción?: string;
+  imagen_ruta?: string | null;
   imagen_uri?: string | null;
 }
 
@@ -68,6 +70,8 @@ const SeccionLugares = ({ coleccion, titulo }: SeccionProps) => {
         source={
           item.imagen_uri
             ? { uri: item.imagen_uri }
+            : item.imagen_ruta
+            ? imagenesLugares[item.imagen_ruta]
             : require('../../assets/images/lugaresIniciales/parroquia.jpg')
         }
         style={styles.imagen}
