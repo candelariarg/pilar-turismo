@@ -5,6 +5,7 @@
   "dependencies": {
     "@expo/ui": "~57.0.25",
     "@expo/vector-icons": "^15.0.2",
+    "@react-navigation/native": "^7.5.1",
     "expo": "~57.0.30",
     "expo-constants": "~57.0.16",
     "expo-device": "~57.0.2",
@@ -24,6 +25,7 @@
     "expo-web-browser": "~57.0.3",
     "firebase": "^12.18.0",
     "i18next": "^26.4.2",
+    "navigation": "^6.5.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-i18next": "^17.0.14",
