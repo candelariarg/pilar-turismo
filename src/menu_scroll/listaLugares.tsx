@@ -45,7 +45,7 @@ const SeccionLugares = ({ coleccion, titulo }: SeccionProps) => {
         const querySnapshot = await getDocs(lugaresRef);
         const lugaresArray: Lugar[] = [];
 
-        querySnapshot.forEach((doc) => {
+        querySnapshot.forEach((doc: { id: string; data: () => unknown }) => {
           const data = doc.data() as Omit<Lugar, 'id'>;
           lugaresArray.push({
             id: doc.id,
