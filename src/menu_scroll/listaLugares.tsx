@@ -21,8 +21,8 @@ const { width } = Dimensions.get('window');
 interface Lugar {
   id: string;
   Nombre: string;
-  Dirección: string;
-  Descripción?: string;
+  Direccion: string;
+  Descripcion?: string;
   imagen_ruta?: string | null;
   imagen_uri?: string | null;
 }
@@ -81,11 +81,11 @@ const SeccionLugares = ({ coleccion, titulo }: SeccionProps) => {
         {item.Nombre}
       </Text>
       <Text style={styles.direccion} numberOfLines={1}>
-        {t('map.location')}: {item.Dirección}
+        {t('map.location')}: {item.Direccion}
       </Text>
-      {item.Descripción ? (
+      {item.Descripcion ? (
         <Text style={styles.descripcion} numberOfLines={2}>
-          {item.Descripción}
+          {item.Descripcion}
         </Text>
       ) : null}
     </View>
