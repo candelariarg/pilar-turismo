@@ -1,7 +1,6 @@
 import React, { useRef } from 'react';
 import { View, StyleSheet, PanResponder, StyleProp, ViewStyle } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useNavigation } from '@react-navigation/native';
 
 export type TabRouteName = 'index' | 'explore' | 'clima' | 'perfil';
 
@@ -14,7 +13,6 @@ interface SwipeableScreenProps {
 }
 
 export function SwipeableScreen({ children, currentTab, style }: SwipeableScreenProps) {
-  const navigation = useNavigation<any>();
   const router = useRouter();
   const isNavigatingRef = useRef(false);
 
@@ -22,14 +20,11 @@ export function SwipeableScreen({ children, currentTab, style }: SwipeableScreen
     if (isNavigatingRef.current) return;
     isNavigatingRef.current = true;
 
+    const route = target === 'index' ? '/' : `/${target}`;
     try {
-      if (navigation && typeof navigation.navigate === 'function') {
-        navigation.navigate(target);
-      } else {
-        router.replace(target === 'index' ? '/' : `/${target}`);
-      }
+      router.navigate(route as any);
     } catch {
-      router.replace(target === 'index' ? '/' : `/${target}`);
+      router.replace(route as any);
     }
 
     setTimeout(() => {
