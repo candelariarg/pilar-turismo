@@ -45,7 +45,6 @@ example
 
 /.claude
 /.vscode
-/assets
 /scripts
 AGENTS.md
 CLAUDE.md
