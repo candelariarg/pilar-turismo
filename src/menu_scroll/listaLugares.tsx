@@ -13,7 +13,7 @@ import {
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../configuracion/FirebaseConfig';
 import { useTranslation } from 'react-i18next';
-import { imagenesLugares, imagenPorDefecto } from './configImagenes';
+import { imagenesLugares } from './configImagenes';
 
 //obtenemos el ancho de la pantalla para darle un tamaño proporcional a las tarjetas
 const { width } = Dimensions.get('window');
@@ -72,7 +72,7 @@ const SeccionLugares = ({ coleccion, titulo }: SeccionProps) => {
             ? { uri: item.imagen_uri }
             : item.imagen_ruta
             ? imagenesLugares[item.imagen_ruta]
-            : require('../../assets/images/lugaresIniciales/parroquia.jpg')
+            : require('../../assets/images/lugaresIniciales/parroquia.jpeg')
         }
         style={styles.imagen}
         resizeMode="cover"
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   tituloSeccion: {
-    fontSize: 20,
+    fontSize: 25,
     fontWeight: 'bold',
     color: '#ffffff',
     marginLeft: 12,
@@ -163,10 +163,10 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: 'white',
-    padding: 15,
-    borderRadius: 8,
-    marginRight: 12,
-    width: width * 0.7, //cada tarjeta ocupa el 70% del ancho de la pantalla
+    padding: 15, //espacio interno de la tarjeta
+    borderRadius: 8, //bordes redondeados
+    marginRight: 12, //espacio entre tarjetas
+    width: width * 0.35, //cada tarjeta ocupa el 35% del ancho de la pantalla
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
   },
   imagen: {
     width: '100%',
-    height: 140,
+    height: 200,
     borderRadius: 8,
     marginBottom: 10,
     backgroundColor: '#e0e0e0',

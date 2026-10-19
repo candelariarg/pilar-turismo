@@ -22,5 +22,3 @@ export const imagenesLugares: Record<string, ImageSourcePropType> = {
   aldea: require('../../assets/images/lugaresIniciales/aldea.jpeg'),
   paseo: require('../../assets/images/lugaresIniciales/paseo.jpeg'),
 };
-
-export const imagenPorDefecto: ImageSourcePropType = require('../../assets/images/lugaresIniciales/parroquia');
