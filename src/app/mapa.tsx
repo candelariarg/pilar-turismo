@@ -56,6 +56,7 @@ export default function ExploreScreen() {
     <ThemedView style={styles.container}>
       <SwipeableScreen currentTab="explore">
         <SafeAreaView style={styles.safeArea} edges={['top']}>
+          <AppHeader />
 
         {/* HEADER Y FILTROS */}
         <View style={styles.header}>

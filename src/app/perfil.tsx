@@ -5,7 +5,7 @@ import { ThemedView } from '@/src/components/themed-view';
 import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
 import { SwipeableScreen } from '@/src/components/swipeable-screen';
-
+import { AppHeader } from '@/src/components/app-header';
 export default function PerfilScreen() {
   const { t, i18n } = useTranslation();
 
@@ -38,7 +38,7 @@ export default function PerfilScreen() {
     <ThemedView style={styles.container}>
       <SwipeableScreen currentTab="perfil">
         <SafeAreaView style={styles.safeArea} edges={['top']}>
-        
+        <AppHeader />
         {/* Encabezado Azul */}
         <View style={styles.header}>
           <Image

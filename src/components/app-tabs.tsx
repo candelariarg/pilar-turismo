@@ -67,7 +67,7 @@ export default function AppTabs() {
 
       {/* Pestaña: MAPA */}
       <Tabs.Screen
-        name="explore"
+        name="mapa"
         options={{
           title: t('tabs.map'),
           tabBarIcon: () => (
