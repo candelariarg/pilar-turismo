@@ -3,6 +3,7 @@ import {
   StyleSheet,
   View,
   Text,
+  TextInput,
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
@@ -16,6 +17,7 @@ import LeafletMap from '@/src/components/leaflet-map';
 
 //  deslizar pantallas
 import { SwipeableScreen } from '@/src/components/swipeable-screen';
+import { AppHeader } from '@/src/components/app-header';
 
 // componente de el Hook
 import { useMaps } from '@/src/hooks/useMaps';
@@ -23,6 +25,13 @@ import { PlaceCategory } from '../servicios/map/type';
 
 export default function ExploreScreen() {
   const [categoriaSel, setCategoriaSel] = useState<PlaceCategory>('all');
+  // Controla si la navegación está activa
+  const [isNavigating, setIsNavigating] = useState(false);
+
+  // Controla si se muestra el cartel de aviso (los 10 segundos)
+  const [showNavAlert, setShowNavAlert] = useState(false);
+
+  const [textoBusqueda, setTextoBusqueda] = useState('');
 
   const {
     userLocation,
@@ -33,6 +42,7 @@ export default function ExploreScreen() {
     errorMsg,
     transportMode,
     loadPlaces,
+    searchPlaces,
     calculateRouteTo,
     changeTransportMode,
     clearSelection,
@@ -43,6 +53,12 @@ export default function ExploreScreen() {
     setCategoriaSel(cat);
     loadPlaces(cat);
   };
+  // FUNCION PARA LA BUSQUEDA POR TEXTO 
+  const handleBuscar = () => {
+    if (textoBusqueda.trim()) {
+    searchPlaces(textoBusqueda);
+  }
+};
 
   // Cuando el usuario toca un marcador dentro del mapa Leaflet
   const handleMarkerPress = (placeId: string) => {
@@ -51,20 +67,54 @@ export default function ExploreScreen() {
       calculateRouteTo(place);
     }
   };
+  // INICIO DE LA NAVEGACION Y EL OCULTAMIENTO DE LOS DEMAS LUGARES 
+  const iniciarNavegacion = () => {
+    setIsNavigating(true);
+    setShowNavAlert(true);
+
+    // Se oculta automáticamente a los 10 segundos
+    setTimeout(() => {
+      setShowNavAlert(false);
+    }, 10000);
+  };
 
   return (
     <ThemedView style={styles.container}>
-      <SwipeableScreen currentTab="explore">
+      <SwipeableScreen currentTab="mapa">
         <SafeAreaView style={styles.safeArea} edges={['top']}>
           <AppHeader />
 
         {/* HEADER Y FILTROS */}
         <View style={styles.header}>
+          
+          {/* Barra interactiva: TextInput con búsqueda en tiempo real y botón para limpiar ----*/}
           <View style={styles.searchBar}>
-            <Ionicons name="search" size={20} color="#666" style={{ marginRight: 8 }} />
-            <Text style={styles.searchText}>Buscando en Pilar...</Text>
-            {loading && <ActivityIndicator size="small" color="#2196F3" />}
-          </View>
+            <TouchableOpacity onPress={handleBuscar}>
+              <Ionicons name="search" size={20} color="#666" style={{ marginRight: 8 }} />
+              </TouchableOpacity>
+
+            <TextInput
+              style={{ flex: 1, color: '#1A202C', fontSize: 14, paddingVertical: 0 }}
+              placeholder="Buscar en Pilar... (ej: farmacia, museo)"
+              placeholderTextColor="#718096"
+              value={textoBusqueda}
+              onChangeText={setTextoBusqueda}
+              onSubmitEditing={handleBuscar}
+              returnKeyType="search" 
+          //------------------------------------------------//
+  />
+
+             {/* Botón cruz para borrar el texto escrito */}
+            {textoBusqueda.length > 0 && (
+              <TouchableOpacity onPress={() => { setTextoBusqueda(''); loadPlaces('all'); }}>
+              <Ionicons name="close-circle" size={18} color="#999" />
+              </TouchableOpacity>
+            )}
+
+  {loading && <ActivityIndicator size="small" color="#2196F3" style={{ marginLeft: 6 }} />}
+</View>
+
+
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtrosContainer}>
             <TouchableOpacity style={[styles.chip, categoriaSel === 'all' && styles.chipActivo]} onPress={() => handleFiltro('all')}>
@@ -105,10 +155,11 @@ export default function ExploreScreen() {
             </View>
           ) : userLocation ? (
             <LeafletMap
-              userLocation={userLocation}
-              places={places}
-              routeData={routeData}
-              onMarkerPress={handleMarkerPress}
+            userLocation={userLocation}
+            places={isNavigating && selectedPlace ? [selectedPlace] : places} // <-- si se navega desaparece los demas ubicaciones
+            selectedPlace={selectedPlace}
+            routeData={routeData}
+            onMarkerPress={handleMarkerPress}
             />
           ) : (
             <View style={styles.centeredMsg}>
@@ -119,7 +170,7 @@ export default function ExploreScreen() {
         </View>
 
         {/* TARJETA DE INFORMACIÓN */}
-        {selectedPlace && (
+        {selectedPlace && !isNavigating && (
           <View style={styles.cardInfo}>
             <View style={styles.cardHeader}>
               <View style={{ flex: 1 }}>
@@ -170,13 +221,27 @@ export default function ExploreScreen() {
 
             <TouchableOpacity
               style={styles.btnSuccess}
-              onPress={() => alert(`Navegando hacia ${selectedPlace.name}...`)}
+              onPress={iniciarNavegacion}
             >
               <Ionicons name="navigate" size={20} color="#FFF" style={{ marginRight: 6 }} />
               <Text style={styles.btnPrimaryText}>Iniciar Navegación</Text>
             </TouchableOpacity>
           </View>
         )}
+        
+        {/* boton de finalizar navegacion */}
+        {isNavigating && (
+          <TouchableOpacity
+          style={styles.btnSalirNav}
+          onPress={() => {
+            setIsNavigating(false);
+            clearSelection();
+          }}
+  >
+        <Ionicons name="stop-circle" size={20} color="#FFF" style={{ marginRight: 6 }} />
+        <Text style={{ color: '#FFF', fontWeight: 'bold' }}>Finalizar Navegación</Text>
+        </TouchableOpacity>
+      )}
 
         </SafeAreaView>
       </SwipeableScreen>
@@ -247,4 +312,25 @@ const styles = StyleSheet.create({
   transportBtnTextActive: {
     color: '#FFF'
   },
+
+   btnSalirNav: {
+    position: 'absolute',
+    bottom: 24,
+    alignSelf: 'center',
+    backgroundColor: '#E53935', // Rojo llamativo
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 30,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    zIndex: 100,
+  },
+
 });
+
+

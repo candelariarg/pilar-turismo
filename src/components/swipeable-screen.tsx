@@ -2,9 +2,9 @@ import React, { useRef } from 'react';
 import { View, StyleSheet, PanResponder, StyleProp, ViewStyle } from 'react-native';
 import { useRouter } from 'expo-router';
 
-export type TabRouteName = 'index' | 'explore' | 'clima' | 'perfil';
+export type TabRouteName = 'index' | 'mapa' | 'clima' | 'perfil';
 
-const TAB_ORDER: TabRouteName[] = ['index', 'explore', 'clima', 'perfil'];
+const TAB_ORDER: TabRouteName[] = ['index', 'mapa', 'clima', 'perfil'];
 
 interface SwipeableScreenProps {
   children: React.ReactNode;

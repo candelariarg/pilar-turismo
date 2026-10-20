@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import * as Location from 'expo-location';
 import { Place, PlaceCategory, LocationCoords, RouteData } from '../servicios/map/type';
-import { fetchPlacesOSM, fetchRouteOSRM } from '../servicios/map/mapServices';
+import { fetchPlacesOSM, fetchRouteOSRM, searchPlacesOSM } from '../servicios/map/mapServices';
 
 // Definimos los tipos de transporte soportados
 export type TransportMode = 'driving' | 'foot' | 'bike';
@@ -64,6 +64,18 @@ export const useMaps = () => {
         setLoading(false);
     };
 
+    // Función que ejecuta la búsqueda por texto y actualiza los marcadores del mapa
+    const searchPlaces = async (query: string) => {
+        if (!query.trim()) return;
+        setLoading(true);
+        setRouteData(null);
+        setSelectedPlace(null);
+        
+        const fetchedPlaces = await searchPlacesOSM(query);
+        setPlaces(fetchedPlaces);
+        setLoading(false);
+    };
+
     // ==========================================
     // 3. Función para trazar ruta hacia un lugar
     // ==========================================
@@ -111,6 +123,7 @@ export const useMaps = () => {
         errorMsg,
         transportMode,
         loadPlaces,
+        searchPlaces, // se usa para buscar lugares por texto
         calculateRouteTo,
         changeTransportMode,
         clearSelection

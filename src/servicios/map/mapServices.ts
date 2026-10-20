@@ -1,19 +1,85 @@
 import { LocationCoords, RouteData, Place, PlaceCategory, NominatimPlaceResponse } from './type';
 
-// URL base de la API pública y gratuita de OSRM (sin el /driving al final)
+
+// CONFIGURACION DE LA API //
+// URL base de OpenRouteService (HeiGIT)
+const ORS_BASE_URL = 'https://api.openrouteservice.org/v2/directions';
+
+// URL base de la API pública de OSRM (usada como fallback de seguridad)
 const OSRM_BASE_URL = 'https://router.project-osrm.org/route/v1';
 
 // URL base de Nominatim (OpenStreetMap) para buscar lugares
 const NOMINATIM_BASE_URL = 'https://nominatim.openstreetmap.org/search';
 
 /**
- * Obtiene la ruta entre dos puntos usando la API de OSRM (Open Source Routing Machine)
+ * Convierte el modo de transporte de la app al perfil que requiere OpenRouteService
  */
-export const fetchRouteOSRM = async (origin: LocationCoords, destination: LocationCoords, mode: 'driving' | 'foot' | 'bike' = 'driving'): Promise<RouteData | null> => {
+const getOrsProfile = (mode: 'driving' | 'foot' | 'bike'): string => {
+    switch (mode) {
+        case 'foot': return 'foot-walking';
+        case 'bike': return 'cycling-regular';
+        case 'driving':
+        default:
+            return 'driving-car';
+    }
+};
+
+
+
+/**
+ * Obtiene la ruta entre dos puntos usando OpenRouteService (ORS)
+ * Si no hay API key o hay error de red, utiliza OSRM como respaldo.
+ */
+export const fetchRouteOSRM = async (
+    origin: LocationCoords,
+    destination: LocationCoords,
+    mode: 'driving' | 'foot' | 'bike' = 'driving'
+): Promise<RouteData | null> => {
+    const apiKey = process.env.EXPO_PUBLIC_ORS_API_KEY; // CALCULA LA RUTA PRICIPAL USANDO LA API OpenRouteService 
+
+    // 1. Intentamos primero con OpenRouteService si la API key está disponible
+    if (apiKey) {
+        try {
+            const profile = getOrsProfile(mode);
+            const url = `${ORS_BASE_URL}/${profile}?api_key=${apiKey}&start=${origin.longitude},${origin.latitude}&end=${destination.longitude},${destination.latitude}`;
+
+            const response = await fetch(url, {
+                headers: {
+                    Accept: 'application/json, application/geo+json',
+                },
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.features && data.features.length > 0) {
+                    const feature = data.features[0];
+                    const routeCoordinates: LocationCoords[] = feature.geometry.coordinates.map(
+                        (coord: [number, number]) => ({
+                            latitude: coord[1],
+                            longitude: coord[0],
+                        })
+                    );
+
+                    const summary = feature.properties?.summary;
+                    return {
+                        distanceKm: summary ? parseFloat((summary.distance / 1000).toFixed(1)) : 0,
+                        durationMin: summary ? Math.round(summary.duration / 60) : 0,
+                        coordinates: routeCoordinates,
+                    };
+                }
+            } else {
+                console.warn(`[OpenRouteService] Respuesta no exitosa (${response.status}), intentando fallback...`);
+            }
+        } catch (error) {
+            console.warn('[OpenRouteService] Error al consultar ORS, usando fallback OSRM:', error);
+        }
+    }
+
+    // 2. Fallback a OSRM en caso de no tener API Key o si ORS no respondió
     try {
         const coordinatesString = `${origin.longitude},${origin.latitude};${destination.longitude},${destination.latitude}`;
-        // Armamos la URL inyectando el medio de transporte (driving, foot, bike)
-        const url = `${OSRM_BASE_URL}/${mode}/${coordinatesString}?overview=full&geometries=geojson`;
+        const osrmMode = mode === 'bike' ? 'driving' : mode; // OSRM demo no siempre soporta bike
+        const url = `${OSRM_BASE_URL}/${osrmMode}/${coordinatesString}?overview=full&geometries=geojson`;
 
         const response = await fetch(url);
         if (!response.ok) throw new Error(`Error OSRM: ${response.status}`);
@@ -35,11 +101,10 @@ export const fetchRouteOSRM = async (origin: LocationCoords, destination: Locati
         }
         return null;
     } catch (error) {
-        console.error("Error al obtener ruta OSRM:", error);
+        console.error('Error al obtener ruta:', error);
         return null;
     }
 };
-
 
 /**
  * Busca lugares (Puntos de Interés) usando la API de Nominatim de OpenStreetMap
@@ -49,41 +114,28 @@ export const fetchRouteOSRM = async (origin: LocationCoords, destination: Locati
  */
 export const fetchPlacesOSM = async (category: PlaceCategory): Promise<Place[]> => {
     try {
-        // 1. Armamos el término de búsqueda.
-        // Si nos piden 'all', buscamos atracciones en general. Si no, usamos la categoría (ej: "hospital").
         const queryTerm = category === 'all' ? 'tourist attractions' : category;
-        
-        // 2. Le indicamos que busque específicamente en Pilar, Buenos Aires.
         const q = `${queryTerm} in Pilar, Buenos Aires`;
-        
-        // 3. Armamos la URL. format=json es necesario, y limit=15 para no traer demasiados resultados.
         const url = `${NOMINATIM_BASE_URL}?q=${encodeURIComponent(q)}&format=json&limit=15`;
 
-        // Nominatim pide por cortesía que enviemos un User-Agent (identificador) de nuestra app
         const response = await fetch(url, {
             headers: {
-                'User-Agent': 'PilarTurismoApp/1.0'
-            }
+                'User-Agent': 'PilarTurismoApp/1.0',
+            },
         });
 
         if (!response.ok) throw new Error(`Error Nominatim: ${response.status}`);
 
         const data: NominatimPlaceResponse[] = await response.json();
 
-        // 4. Transformamos los datos "crudos" de Nominatim a nuestro formato limpio 'Place'
         const lugaresFormateados: Place[] = data.map((item) => {
-            // Nominatim devuelve display_name muy largo (ej: "Hospital Austral, Avenida..., Pilar...").
-            // Nos quedamos solo con la primera parte antes de la primera coma para el título.
             const shortName = item.name || item.display_name.split(',')[0];
 
             return {
-                id: item.place_id.toString(), // Convertimos el número a texto
+                id: item.place_id.toString(),
                 name: shortName,
                 category: category,
-                // Traducimos un poco el nombre de la categoría para mostrarlo en pantalla
                 categoryName: category === 'all' ? 'Lugar' : category.charAt(0).toUpperCase() + category.slice(1),
-                // MUY IMPORTANTE: Nominatim devuelve las coordenadas como texto ("-34.56"), 
-                // nosotros las necesitamos como números decimales. Usamos parseFloat.
                 latitude: parseFloat(item.lat),
                 longitude: parseFloat(item.lon),
                 address: item.display_name,
@@ -93,7 +145,42 @@ export const fetchPlacesOSM = async (category: PlaceCategory): Promise<Place[]> 
         return lugaresFormateados;
 
     } catch (error) {
-        console.error("Error al buscar lugares en Nominatim:", error);
-        return []; // Si falla, devolvemos una lista vacía para que no se rompa la app
+        console.error('Error al buscar lugares en Nominatim:', error);
+        return [];
+    }
+};
+/**
+ * Busca cualquier lugar por texto libre en Pilar usando OpenStreetMap (Nominatim)
+ */
+export const searchPlacesOSM = async (query: string): Promise<Place[]> => {
+    try {
+        const q = `${query} in Pilar, Buenos Aires`;
+        const url = `${NOMINATIM_BASE_URL}?q=${encodeURIComponent(q)}&format=json&limit=15`;
+
+        const response = await fetch(url, {
+            headers: {
+                'User-Agent': 'PilarTurismoApp/1.0',
+            },
+        });
+
+        if (!response.ok) throw new Error(`Error Nominatim: ${response.status}`);
+
+        const data: NominatimPlaceResponse[] = await response.json();
+
+        return data.map((item) => {
+            const shortName = item.name || item.display_name.split(',')[0];
+            return {
+                id: item.place_id.toString(),
+                name: shortName,
+                category: 'all',
+                categoryName: 'Búsqueda',
+                latitude: parseFloat(item.lat),
+                longitude: parseFloat(item.lon),
+                address: item.display_name,
+            };
+        });
+    } catch (error) {
+        console.error('Error al buscar lugares en Nominatim:', error);
+        return [];
     }
 };
