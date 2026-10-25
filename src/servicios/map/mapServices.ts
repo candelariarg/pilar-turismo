@@ -1,19 +1,18 @@
 import { LocationCoords, RouteData, Place, PlaceCategory, NominatimPlaceResponse } from './type';
 
-
-// CONFIGURACION DE LA API //
-// URL base de OpenRouteService (HeiGIT)
+// ============================================================
+// Configuración de URLs para las APIs de mapas y ruteo
+// OpenRouteService (rutas precisas), OSRM (respaldo) y Nominatim (búsqueda de lugares)
+// ============================================================
 const ORS_BASE_URL = 'https://api.openrouteservice.org/v2/directions';
-
-// URL base de la API pública de OSRM (usada como fallback de seguridad)
 const OSRM_BASE_URL = 'https://router.project-osrm.org/route/v1';
-
-// URL base de Nominatim (OpenStreetMap) para buscar lugares
 const NOMINATIM_BASE_URL = 'https://nominatim.openstreetmap.org/search';
+// ============================================================
 
-/**
- * Convierte el modo de transporte de la app al perfil que requiere OpenRouteService
- */
+// ============================================================
+// Convierte el modo de transporte de la app al perfil que requiere OpenRouteService
+// (driving -> driving-car, foot -> foot-walking, bike -> cycling-regular)
+// ============================================================
 const getOrsProfile = (mode: 'driving' | 'foot' | 'bike'): string => {
     switch (mode) {
         case 'foot': return 'foot-walking';
@@ -23,21 +22,20 @@ const getOrsProfile = (mode: 'driving' | 'foot' | 'bike'): string => {
             return 'driving-car';
     }
 };
+// ============================================================
 
-
-
-/**
- * Obtiene la ruta entre dos puntos usando OpenRouteService (ORS)
- * Si no hay API key o hay error de red, utiliza OSRM como respaldo.
- */
+// ============================================================
+// Obtiene la ruta entre dos puntos usando la API de OpenRouteService (ORS)
+// Si no hay API key o hay error de red, utiliza OSRM como respaldo automático
+// ============================================================
 export const fetchRouteOSRM = async (
     origin: LocationCoords,
     destination: LocationCoords,
     mode: 'driving' | 'foot' | 'bike' = 'driving'
 ): Promise<RouteData | null> => {
-    const apiKey = process.env.EXPO_PUBLIC_ORS_API_KEY; // CALCULA LA RUTA PRICIPAL USANDO LA API OpenRouteService 
+    const apiKey = process.env.EXPO_PUBLIC_ORS_API_KEY;
 
-    // 1. Intentamos primero con OpenRouteService si la API key está disponible
+    // 1. Intento principal con OpenRouteService
     if (apiKey) {
         try {
             const profile = getOrsProfile(mode);
@@ -75,10 +73,10 @@ export const fetchRouteOSRM = async (
         }
     }
 
-    // 2. Fallback a OSRM en caso de no tener API Key o si ORS no respondió
+    // 2. Respaldo (Fallback) a OSRM si no hay API Key o falla ORS
     try {
         const coordinatesString = `${origin.longitude},${origin.latitude};${destination.longitude},${destination.latitude}`;
-        const osrmMode = mode === 'bike' ? 'driving' : mode; // OSRM demo no siempre soporta bike
+        const osrmMode = mode === 'bike' ? 'driving' : mode;
         const url = `${OSRM_BASE_URL}/${osrmMode}/${coordinatesString}?overview=full&geometries=geojson`;
 
         const response = await fetch(url);
@@ -105,13 +103,11 @@ export const fetchRouteOSRM = async (
         return null;
     }
 };
+// ============================================================
 
-/**
- * Busca lugares (Puntos de Interés) usando la API de Nominatim de OpenStreetMap
- * 
- * @param category - La categoría del lugar que queremos buscar
- * @returns Promesa con una lista de lugares adaptada a nuestra interfaz Place
- */
+// ============================================================
+// Busca lugares (Puntos de Interés) por categoría usando Nominatim de OpenStreetMap
+// ============================================================
 export const fetchPlacesOSM = async (category: PlaceCategory): Promise<Place[]> => {
     try {
         const queryTerm = category === 'all' ? 'tourist attractions' : category;
@@ -149,9 +145,11 @@ export const fetchPlacesOSM = async (category: PlaceCategory): Promise<Place[]> 
         return [];
     }
 };
-/**
- * Busca cualquier lugar por texto libre en Pilar usando OpenStreetMap (Nominatim)
- */
+// ============================================================
+
+// ============================================================
+// Busca cualquier lugar por texto libre en Pilar usando OpenStreetMap (Nominatim)
+// ============================================================
 export const searchPlacesOSM = async (query: string): Promise<Place[]> => {
     try {
         const q = `${query} in Pilar, Buenos Aires`;
@@ -184,3 +182,4 @@ export const searchPlacesOSM = async (query: string): Promise<Place[]> => {
         return [];
     }
 };
+// ============================================================

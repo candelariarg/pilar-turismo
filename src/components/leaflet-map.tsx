@@ -20,7 +20,9 @@ const generateMapHTML = (
   selectedPlace?: Place | null
 ): string => {
 
-  // Colores según categoría
+  // ============================================================
+  // Funciones para definir color y emoji según la categoría del lugar
+  // ============================================================
   const getColor = (cat: string) => {
     switch (cat) {
       case 'hospital': return '#E53935';
@@ -33,7 +35,6 @@ const generateMapHTML = (
     }
   };
 
-  // Emoji según categoría
   const getEmoji = (cat: string) => {
     switch (cat) {
       case 'hospital': return '🏥';
@@ -45,8 +46,11 @@ const generateMapHTML = (
       default: return '📍';
     }
   };
+  // ============================================================
 
-  // Generamos los marcadores como código JavaScript
+  // ============================================================
+  // Generación dinámica de los marcadores en código JavaScript para Leaflet
+  // ============================================================
   const markersJS = places.map((p) => {
     const color = getColor(p.category);
     const emoji = getEmoji(p.category);
@@ -68,8 +72,11 @@ const generateMapHTML = (
       });
     `;
   }).join('\n');
+  // ============================================================
 
-  // Si hay ruta, generamos el trazado con estilo moderno (casing/borde) + pin de destino + auto-encuadre fitBounds
+  // ============================================================
+  // Trazado de ruta visual estilo Waze/Google Maps + Pin de llegada animado + Auto-encuadre fitBounds
+  // ============================================================
   const safeDestName = selectedPlace ? selectedPlace.name.replace(/'/g, "\\'") : 'Punto de llegada';
   const routeJS = (routeData && routeData.coordinates && routeData.coordinates.length > 0)
     ? `
@@ -119,6 +126,7 @@ const generateMapHTML = (
       })();
     `
     : '';
+  // ============================================================
 
   return `
     <!DOCTYPE html>
@@ -234,11 +242,14 @@ const generateMapHTML = (
   `;
 };
 
+// ============================================================
+// Componente principal LeafletMap que renderiza el mapa dentro de un WebView
+// ============================================================
 export default function LeafletMap({ userLocation, places, selectedPlace, routeData, onMarkerPress }: LeafletMapProps) {
 
   const htmlContent = generateMapHTML(userLocation, places, routeData, selectedPlace);
 
-  // Cuando el usuario toca un marcador dentro del WebView, nos manda un mensaje
+  // Comunicación WebView -> React Native cuando el usuario toca un marcador
   const handleMessage = (event: any) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
@@ -263,6 +274,7 @@ export default function LeafletMap({ userLocation, places, selectedPlace, routeD
     />
   );
 }
+// ============================================================
 
 const styles = StyleSheet.create({
   map: {

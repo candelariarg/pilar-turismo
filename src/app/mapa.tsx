@@ -12,27 +12,28 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedView } from '@/src/components/themed-view';
 
-//  mapa Leaflet 
+// Componentes del mapa y navegación
 import LeafletMap from '@/src/components/leaflet-map';
-
-//  deslizar pantallas
 import { SwipeableScreen } from '@/src/components/swipeable-screen';
 import { AppHeader } from '@/src/components/app-header';
 
-// componente de el Hook
+// Hooks y tipos de datos
 import { useMaps } from '@/src/hooks/useMaps';
 import { PlaceCategory } from '../servicios/map/type';
 
 export default function ExploreScreen() {
+  // ============================================================
+  // Estados para categoría, modo de navegación y búsqueda interactiva
+  // ============================================================
   const [categoriaSel, setCategoriaSel] = useState<PlaceCategory>('all');
-  // Controla si la navegación está activa
   const [isNavigating, setIsNavigating] = useState(false);
-
-  // Controla si se muestra el cartel de aviso (los 10 segundos)
   const [showNavAlert, setShowNavAlert] = useState(false);
-
   const [textoBusqueda, setTextoBusqueda] = useState('');
+  // ============================================================
 
+  // ============================================================
+  // Consumo del Hook useMaps con todas las funciones de ubicación, rutas y búsqueda
+  // ============================================================
   const {
     userLocation,
     places,
@@ -47,36 +48,50 @@ export default function ExploreScreen() {
     changeTransportMode,
     clearSelection,
   } = useMaps();
+  // ============================================================
 
-  // Cuando el usuario toca un filtro
+  // ============================================================
+  // Función para filtrar lugares cuando el usuario toca un cuadro de categoría
+  // ============================================================
   const handleFiltro = (cat: PlaceCategory) => {
     setCategoriaSel(cat);
     loadPlaces(cat);
   };
-  // FUNCION PARA LA BUSQUEDA POR TEXTO 
+  // ============================================================
+
+  // ============================================================
+  // Función para ejecutar la búsqueda por texto libre con Nominatim
+  // ============================================================
   const handleBuscar = () => {
     if (textoBusqueda.trim()) {
-    searchPlaces(textoBusqueda);
-  }
-};
+      searchPlaces(textoBusqueda);
+    }
+  };
+  // ============================================================
 
-  // Cuando el usuario toca un marcador dentro del mapa Leaflet
+  // ============================================================
+  // Función al tocar un marcador en el mapa para trazar la ruta hacia ese lugar
+  // ============================================================
   const handleMarkerPress = (placeId: string) => {
     const place = places.find((p) => p.id === placeId);
     if (place) {
       calculateRouteTo(place);
     }
   };
-  // INICIO DE LA NAVEGACION Y EL OCULTAMIENTO DE LOS DEMAS LUGARES 
+  // ============================================================
+
+  // ============================================================
+  // Función para iniciar navegación, ocultar otros lugares y programar aviso de 10 seg
+  // ============================================================
   const iniciarNavegacion = () => {
     setIsNavigating(true);
     setShowNavAlert(true);
 
-    // Se oculta automáticamente a los 10 segundos
     setTimeout(() => {
       setShowNavAlert(false);
     }, 10000);
   };
+  // ============================================================
 
   return (
     <ThemedView style={styles.container}>
@@ -87,11 +102,13 @@ export default function ExploreScreen() {
         {/* HEADER Y FILTROS */}
         <View style={styles.header}>
           
-          {/* Barra interactiva: TextInput con búsqueda en tiempo real y botón para limpiar ----*/}
+          {/* ============================================================ */}
+          {/* Barra interactiva: TextInput con búsqueda por texto y botón para limpiar */}
+          {/* ============================================================ */}
           <View style={styles.searchBar}>
             <TouchableOpacity onPress={handleBuscar}>
               <Ionicons name="search" size={20} color="#666" style={{ marginRight: 8 }} />
-              </TouchableOpacity>
+            </TouchableOpacity>
 
             <TextInput
               style={{ flex: 1, color: '#1A202C', fontSize: 14, paddingVertical: 0 }}
@@ -101,21 +118,21 @@ export default function ExploreScreen() {
               onChangeText={setTextoBusqueda}
               onSubmitEditing={handleBuscar}
               returnKeyType="search" 
-          //------------------------------------------------//
-  />
+            />
 
-             {/* Botón cruz para borrar el texto escrito */}
             {textoBusqueda.length > 0 && (
               <TouchableOpacity onPress={() => { setTextoBusqueda(''); loadPlaces('all'); }}>
-              <Ionicons name="close-circle" size={18} color="#999" />
+                <Ionicons name="close-circle" size={18} color="#999" />
               </TouchableOpacity>
             )}
 
-  {loading && <ActivityIndicator size="small" color="#2196F3" style={{ marginLeft: 6 }} />}
-</View>
+            {loading && <ActivityIndicator size="small" color="#2196F3" style={{ marginLeft: 6 }} />}
+          </View>
+          {/* ============================================================ */}
 
-
-
+          {/* ============================================================ */}
+          {/* Carrusel horizontal de botones para filtrar por categoría */}
+          {/* ============================================================ */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtrosContainer}>
             <TouchableOpacity style={[styles.chip, categoriaSel === 'all' && styles.chipActivo]} onPress={() => handleFiltro('all')}>
               <Text style={[styles.chipText, categoriaSel === 'all' && styles.chipTextActivo]}>🗺️ Todos</Text>
@@ -141,9 +158,12 @@ export default function ExploreScreen() {
               <Text style={[styles.chipText, categoriaSel === 'park' && styles.chipTextActivo]}>🌳 Parques</Text>
             </TouchableOpacity>
           </ScrollView>
+          {/* ============================================================ */}
         </View>
 
-        {/* MAPA LEAFLET */}
+        {/* ============================================================ */}
+        {/* MAPA LEAFLET: Durante navegación solo muestra el destino seleccionado */}
+        {/* ============================================================ */}
         <View style={styles.mapArea}>
           {errorMsg ? (
             <View style={styles.centeredMsg}>
@@ -155,11 +175,11 @@ export default function ExploreScreen() {
             </View>
           ) : userLocation ? (
             <LeafletMap
-            userLocation={userLocation}
-            places={isNavigating && selectedPlace ? [selectedPlace] : places} // <-- si se navega desaparece los demas ubicaciones
-            selectedPlace={selectedPlace}
-            routeData={routeData}
-            onMarkerPress={handleMarkerPress}
+              userLocation={userLocation}
+              places={isNavigating && selectedPlace ? [selectedPlace] : places}
+              selectedPlace={selectedPlace}
+              routeData={routeData}
+              onMarkerPress={handleMarkerPress}
             />
           ) : (
             <View style={styles.centeredMsg}>
@@ -168,8 +188,11 @@ export default function ExploreScreen() {
             </View>
           )}
         </View>
+        {/* ============================================================ */}
 
-        {/* TARJETA DE INFORMACIÓN */}
+        {/* ============================================================ */}
+        {/* TARJETA DE INFORMACIÓN: Se oculta automáticamente cuando isNavigating es true */}
+        {/* ============================================================ */}
         {selectedPlace && !isNavigating && (
           <View style={styles.cardInfo}>
             <View style={styles.cardHeader}>
@@ -182,7 +205,7 @@ export default function ExploreScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* BOTONES DE TRANSPORTE */}
+            {/* Selector de modo de transporte (Auto, A pie, Bici) */}
             <View style={styles.transportSelector}>
               <TouchableOpacity style={[styles.transportBtn, transportMode === 'driving' && styles.transportBtnActive]} onPress={() => changeTransportMode('driving')}>
                 <Ionicons name="car-outline" size={18} color={transportMode === 'driving' ? '#FFF' : '#666'} />
@@ -198,6 +221,7 @@ export default function ExploreScreen() {
               </TouchableOpacity>
             </View>
 
+            {/* Métricas de ruta calculadas (Distancia y Tiempo estimado) */}
             {routeData ? (
               <View style={styles.metricsRow}>
                 <View style={styles.metricItem}>
@@ -219,6 +243,7 @@ export default function ExploreScreen() {
               </View>
             )}
 
+            {/* Botón para activar el modo navegación */}
             <TouchableOpacity
               style={styles.btnSuccess}
               onPress={iniciarNavegacion}
@@ -228,20 +253,24 @@ export default function ExploreScreen() {
             </TouchableOpacity>
           </View>
         )}
+        {/* ============================================================ */}
         
-        {/* boton de finalizar navegacion */}
+        {/* ============================================================ */}
+        {/* Botón flotante para finalizar navegación y restaurar los lugares */}
+        {/* ============================================================ */}
         {isNavigating && (
           <TouchableOpacity
-          style={styles.btnSalirNav}
-          onPress={() => {
-            setIsNavigating(false);
-            clearSelection();
-          }}
-  >
-        <Ionicons name="stop-circle" size={20} color="#FFF" style={{ marginRight: 6 }} />
-        <Text style={{ color: '#FFF', fontWeight: 'bold' }}>Finalizar Navegación</Text>
-        </TouchableOpacity>
-      )}
+            style={styles.btnSalirNav}
+            onPress={() => {
+              setIsNavigating(false);
+              clearSelection();
+            }}
+          >
+            <Ionicons name="stop-circle" size={20} color="#FFF" style={{ marginRight: 6 }} />
+            <Text style={{ color: '#FFF', fontWeight: 'bold' }}>Finalizar Navegación</Text>
+          </TouchableOpacity>
+        )}
+        {/* ============================================================ */}
 
         </SafeAreaView>
       </SwipeableScreen>
@@ -249,6 +278,9 @@ export default function ExploreScreen() {
   );
 }
 
+// ============================================================
+// Estilos del componente Mapa y de sus elementos flotantes
+// ============================================================
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F5F7FA' },
   safeArea: { flex: 1 },
@@ -312,12 +344,11 @@ const styles = StyleSheet.create({
   transportBtnTextActive: {
     color: '#FFF'
   },
-
-   btnSalirNav: {
+  btnSalirNav: {
     position: 'absolute',
     bottom: 24,
     alignSelf: 'center',
-    backgroundColor: '#E53935', // Rojo llamativo
+    backgroundColor: '#E53935',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
@@ -330,7 +361,5 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     zIndex: 100,
   },
-
 });
-
-
+// ============================================================

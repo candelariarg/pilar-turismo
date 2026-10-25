@@ -7,22 +7,21 @@ import { fetchPlacesOSM, fetchRouteOSRM, searchPlacesOSM } from '../servicios/ma
 export type TransportMode = 'driving' | 'foot' | 'bike';
 
 export const useMaps = () => {
-    // ==========================================
-    // ESTADOS
-    // ==========================================
+    // ============================================================
+    // Estados principales del mapa (ubicación, lugares, ruta, carga y modo de viaje)
+    // ============================================================
     const [userLocation, setUserLocation] = useState<LocationCoords | null>(null);
     const [places, setPlaces] = useState<Place[]>([]);
     const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
     const [routeData, setRouteData] = useState<RouteData | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
-    
-    // NUEVO ESTADO: Guardamos cómo quiere viajar el usuario (por defecto 'driving')
     const [transportMode, setTransportMode] = useState<TransportMode>('driving');
+    // ============================================================
 
-    // ==========================================
-    // 1. Obtener Ubicación del Usuario al iniciar
-    // ==========================================
+    // ============================================================
+    // 1. Obtener Ubicación del Usuario al iniciar y cargar lugares iniciales
+    // ============================================================
     useEffect(() => {
         (async () => {
             setLoading(true);
@@ -50,10 +49,11 @@ export const useMaps = () => {
             }
         })();
     }, []);
+    // ============================================================
 
-    // ==========================================
-    // 2. Función para cargar lugares según categoría
-    // ==========================================
+    // ============================================================
+    // 2. Función para cargar lugares según la categoría seleccionada
+    // ============================================================
     const loadPlaces = async (category: PlaceCategory) => {
         setLoading(true);
         setRouteData(null); 
@@ -63,8 +63,11 @@ export const useMaps = () => {
         setPlaces(fetchedPlaces);
         setLoading(false);
     };
+    // ============================================================
 
-    // Función que ejecuta la búsqueda por texto y actualiza los marcadores del mapa
+    // ============================================================
+    // 3. Función que ejecuta la búsqueda de lugares por texto libre en Pilar
+    // ============================================================
     const searchPlaces = async (query: string) => {
         if (!query.trim()) return;
         setLoading(true);
@@ -75,18 +78,17 @@ export const useMaps = () => {
         setPlaces(fetchedPlaces);
         setLoading(false);
     };
+    // ============================================================
 
-    // ==========================================
-    // 3. Función para trazar ruta hacia un lugar
-    // ==========================================
-    // Ahora le pasamos el modo de transporte a la API
+    // ============================================================
+    // 4. Función para trazar ruta hacia un lugar según el modo de transporte
+    // ============================================================
     const calculateRouteTo = async (place: Place, mode: TransportMode = transportMode) => {
         setSelectedPlace(place); 
 
         if (userLocation) {
             setLoading(true);
             const destination = { latitude: place.latitude, longitude: place.longitude };
-            // Llamamos a la API con el modo seleccionado (ej: 'foot' o 'driving')
             const route = await fetchRouteOSRM(userLocation, destination, mode);
             setRouteData(route);
             setLoading(false);
@@ -94,25 +96,27 @@ export const useMaps = () => {
             alert('Aún no tenemos tu ubicación GPS');
         }
     };
+    // ============================================================
 
-    // ==========================================
-    // 4. Cambiar de Medio de Transporte
-    // ==========================================
+    // ============================================================
+    // 5. Función para cambiar el medio de transporte (Auto, A pie, Bici) y recalcular ruta
+    // ============================================================
     const changeTransportMode = async (mode: TransportMode) => {
         setTransportMode(mode);
-        // Si ya hay un lugar seleccionado, recalculamos la ruta automáticamente
         if (selectedPlace) {
             await calculateRouteTo(selectedPlace, mode);
         }
     };
+    // ============================================================
 
-    // ==========================================
-    // 5. Función para limpiar la selección
-    // ==========================================
+    // ============================================================
+    // 6. Función para limpiar la selección del lugar y la ruta actual
+    // ============================================================
     const clearSelection = () => {
         setSelectedPlace(null);
         setRouteData(null);
     };
+    // ============================================================
 
     return {
         userLocation,
@@ -123,7 +127,7 @@ export const useMaps = () => {
         errorMsg,
         transportMode,
         loadPlaces,
-        searchPlaces, // se usa para buscar lugares por texto
+        searchPlaces,
         calculateRouteTo,
         changeTransportMode,
         clearSelection
