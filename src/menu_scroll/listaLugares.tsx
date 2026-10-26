@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
     padding: 15, //espacio interno de la tarjeta
     borderRadius: 8, //bordes redondeados
     marginRight: 12, //espacio entre tarjetas
-    width: width * 0.35, //cada tarjeta ocupa el 35% del ancho de la pantalla
+    width: width * 0.40, //cada tarjeta ocupa el 40 % del ancho de la pantalla
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
