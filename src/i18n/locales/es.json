@@ -5,10 +5,15 @@
     "weather": "Clima",
     "profile": "Perfil"
   },
+  "header": {
+    "subtitle": "Descubrí la ciudad"
+  },
   "home": {
     "welcomeTitle": "¡Bienvenido a Pilar!",
     "welcomeSubtitle": "Descubre la historia, gastronomía y naturaleza de nuestra ciudad",
     "searchPlaceholder": "Buscar lugares, restaurantes, eventos...",
+    "historicPlaces": "Lugares históricos locales",
+    "popularPlaces": "Lugares populares",
     "featuredSection": "Lugares Destacados",
     "categoriesSection": "Categorías Principales",
     "upcomingEvents": "Próximos Eventos",
@@ -16,10 +21,26 @@
   },
   "map": {
     "title": "Explorar Pilar",
-    "searchPlaceholder": "Buscar punto de interés...",
+    "searchPlaceholder": "Buscar en Pilar... (ej: farmacia, museo)",
     "location": "Ubicación",
+    "searchingGps": "Buscando satélites GPS...",
+    "distance": "Distancia",
+    "estimatedTime": "Tiempo est.",
+    "calculatingRoute": "Calculando ruta...",
+    "startNavigation": "Iniciar Navegación",
+    "endNavigation": "Finalizar Navegación",
+    "transport": {
+      "car": "Auto",
+      "walk": "A pie",
+      "bike": "Bici"
+    },
     "categories": {
       "all": "Todos",
+      "hospital": "Hospitales",
+      "police": "Comisarías",
+      "supermarket": "Supermercados",
+      "restaurant": "Restaurantes",
+      "park": "Parques",
       "gastronomy": "Gastronomía",
       "history": "Historia y Cultura",
       "nature": "Parques y Naturaleza",
@@ -37,6 +58,31 @@
   },
   "weather": {
     "title": "Clima en Pilar",
+    "today": "Hoy",
+    "max": "Máx.",
+    "min": "Mín.",
+    "feelsLikeText": "Sensación",
+    "hourlyForecast": "PRONÓSTICO POR HORA",
+    "dailyForecast": "PRONÓSTICO DE 7 DÍAS",
+    "additionalInfo": "INFORMACIÓN ADICIONAL",
+    "windLabel": "VIENTO",
+    "feelsLikeLabel": "SENSACIÓN TÉRMICA",
+    "conditions": {
+      "sunny": "Soleado",
+      "partlyCloudy": "Parcialmente nublado",
+      "cloudy": "Nublado",
+      "fog": "Niebla",
+      "rain": "Lluvia"
+    },
+    "days": {
+      "sun": "Dom",
+      "mon": "Lun",
+      "tue": "Mar",
+      "wed": "Mié",
+      "thu": "Jue",
+      "fri": "Vie",
+      "sat": "Sáb"
+    },
     "currentTemperature": "Temperatura actual",
     "feelsLike": "Sensación térmica",
     "humidity": "Humedad",
@@ -64,6 +110,15 @@
     "logout": "Cerrar Sesión",
     "logoutConfirm": "¿Estás seguro de que deseas cerrar sesión?"
   },
+  "chat": {
+    "title": "Guía Virtual de Pilar",
+    "placeholder": "Escribe tu consulta...",
+    "initialMessage": "¡Hola! ¿En qué puedo ayudarte hoy sobre Pilar?",
+    "noApiKey": "Falta configurar EXPO_PUBLIC_DEEPSEEK_API_KEY en tu archivo .env",
+    "noReply": "No pude obtener una respuesta.",
+    "errorConnection": "Hubo un error de conexión con la IA.",
+    "systemPrompt": "Eres el asistente turístico oficial de Pilar, Buenos Aires. Responde de forma amable y concisa."
+  },
   "common": {
     "loading": "Cargando...",
     "error": "Ocurrió un error. Inténtalo de nuevo.",
@@ -72,6 +127,7 @@
     "confirm": "Confirmar",
     "accept": "Aceptar",
     "back": "Volver",
-    "search": "Buscar"
+    "search": "Buscar",
+    "galleryPermission": "Se requiere acceso a la galería."
   }
 }

@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { ThemedView } from '@/src/components/themed-view';
 
 // Componentes del mapa y navegación
@@ -22,6 +23,8 @@ import { useMaps } from '@/src/hooks/useMaps';
 import { PlaceCategory } from '../servicios/map/type';
 
 export default function ExploreScreen() {
+  const { t } = useTranslation();
+
   // ============================================================
   // Estados para categoría, modo de navegación y búsqueda interactiva
   // ============================================================
@@ -81,7 +84,7 @@ export default function ExploreScreen() {
   // ============================================================
 
   // ============================================================
-  // Función para iniciar navegación, ocultar otros lugares y programar aviso de 10 seg
+  // Función  iniciar navegación, ocultar otros lugares 
   // ============================================================
   const iniciarNavegacion = () => {
     setIsNavigating(true);
@@ -103,7 +106,7 @@ export default function ExploreScreen() {
         <View style={styles.header}>
           
           {/* ============================================================ */}
-          {/* Barra interactiva: TextInput con búsqueda por texto y botón para limpiar */}
+          {/* Barra  de  búsqueda  y botón para limpiar */}
           {/* ============================================================ */}
           <View style={styles.searchBar}>
             <TouchableOpacity onPress={handleBuscar}>
@@ -112,7 +115,7 @@ export default function ExploreScreen() {
 
             <TextInput
               style={{ flex: 1, color: '#1A202C', fontSize: 14, paddingVertical: 0 }}
-              placeholder="Buscar en Pilar... (ej: farmacia, museo)"
+              placeholder={t('map.searchPlaceholder')}
               placeholderTextColor="#718096"
               value={textoBusqueda}
               onChangeText={setTextoBusqueda}
@@ -135,34 +138,34 @@ export default function ExploreScreen() {
           {/* ============================================================ */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtrosContainer}>
             <TouchableOpacity style={[styles.chip, categoriaSel === 'all' && styles.chipActivo]} onPress={() => handleFiltro('all')}>
-              <Text style={[styles.chipText, categoriaSel === 'all' && styles.chipTextActivo]}>🗺️ Todos</Text>
+              <Text style={[styles.chipText, categoriaSel === 'all' && styles.chipTextActivo]}>🗺️ {t('map.categories.all')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={[styles.chip, categoriaSel === 'hospital' && styles.chipActivo]} onPress={() => handleFiltro('hospital')}>
-              <Text style={[styles.chipText, categoriaSel === 'hospital' && styles.chipTextActivo]}>🏥 Hospitales</Text>
+              <Text style={[styles.chipText, categoriaSel === 'hospital' && styles.chipTextActivo]}>🏥 {t('map.categories.hospital')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={[styles.chip, categoriaSel === 'police' && styles.chipActivo]} onPress={() => handleFiltro('police')}>
-              <Text style={[styles.chipText, categoriaSel === 'police' && styles.chipTextActivo]}>👮 Comisarías</Text>
+              <Text style={[styles.chipText, categoriaSel === 'police' && styles.chipTextActivo]}>👮 {t('map.categories.police')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={[styles.chip, categoriaSel === 'supermarket' && styles.chipActivo]} onPress={() => handleFiltro('supermarket')}>
-              <Text style={[styles.chipText, categoriaSel === 'supermarket' && styles.chipTextActivo]}>🛒 Supermercados</Text>
+              <Text style={[styles.chipText, categoriaSel === 'supermarket' && styles.chipTextActivo]}>🛒 {t('map.categories.supermarket')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={[styles.chip, categoriaSel === 'restaurant' && styles.chipActivo]} onPress={() => handleFiltro('restaurant')}>
-              <Text style={[styles.chipText, categoriaSel === 'restaurant' && styles.chipTextActivo]}>🍽️ Restaurantes</Text>
+              <Text style={[styles.chipText, categoriaSel === 'restaurant' && styles.chipTextActivo]}>🍽️ {t('map.categories.restaurant')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={[styles.chip, categoriaSel === 'park' && styles.chipActivo]} onPress={() => handleFiltro('park')}>
-              <Text style={[styles.chipText, categoriaSel === 'park' && styles.chipTextActivo]}>🌳 Parques</Text>
+              <Text style={[styles.chipText, categoriaSel === 'park' && styles.chipTextActivo]}>🌳 {t('map.categories.park')}</Text>
             </TouchableOpacity>
           </ScrollView>
           {/* ============================================================ */}
         </View>
 
         {/* ============================================================ */}
-        {/* MAPA LEAFLET: Durante navegación solo muestra el destino seleccionado */}
+        {/* MAPA LEAFLET: Durante navegación se ocultan los logos de lugares para dejar solo la ruta y el pin de ls uibicacion */}
         {/* ============================================================ */}
         <View style={styles.mapArea}>
           {errorMsg ? (
@@ -176,7 +179,7 @@ export default function ExploreScreen() {
           ) : userLocation ? (
             <LeafletMap
               userLocation={userLocation}
-              places={isNavigating && selectedPlace ? [selectedPlace] : places}
+              places={isNavigating ? [] : places}
               selectedPlace={selectedPlace}
               routeData={routeData}
               onMarkerPress={handleMarkerPress}
@@ -184,14 +187,14 @@ export default function ExploreScreen() {
           ) : (
             <View style={styles.centeredMsg}>
               <ActivityIndicator size="large" color="#2196F3" />
-              <Text style={{ marginTop: 10, color: '#666' }}>Buscando satélites GPS...</Text>
+              <Text style={{ marginTop: 10, color: '#666' }}>{t('map.searchingGps')}</Text>
             </View>
           )}
         </View>
         {/* ============================================================ */}
 
         {/* ============================================================ */}
-        {/* TARJETA DE INFORMACIÓN: Se oculta automáticamente cuando isNavigating es true */}
+        {/* TARJETA DE INFORMACIÓN Se oculta automáticamente cuando inicia la navegacion */}
         {/* ============================================================ */}
         {selectedPlace && !isNavigating && (
           <View style={styles.cardInfo}>
@@ -209,15 +212,15 @@ export default function ExploreScreen() {
             <View style={styles.transportSelector}>
               <TouchableOpacity style={[styles.transportBtn, transportMode === 'driving' && styles.transportBtnActive]} onPress={() => changeTransportMode('driving')}>
                 <Ionicons name="car-outline" size={18} color={transportMode === 'driving' ? '#FFF' : '#666'} />
-                <Text style={[styles.transportBtnText, transportMode === 'driving' && styles.transportBtnTextActive]}>Auto</Text>
+                <Text style={[styles.transportBtnText, transportMode === 'driving' && styles.transportBtnTextActive]}>{t('map.transport.car')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.transportBtn, transportMode === 'foot' && styles.transportBtnActive]} onPress={() => changeTransportMode('foot')}>
                 <Ionicons name="walk-outline" size={18} color={transportMode === 'foot' ? '#FFF' : '#666'} />
-                <Text style={[styles.transportBtnText, transportMode === 'foot' && styles.transportBtnTextActive]}>A pie</Text>
+                <Text style={[styles.transportBtnText, transportMode === 'foot' && styles.transportBtnTextActive]}>{t('map.transport.walk')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.transportBtn, transportMode === 'bike' && styles.transportBtnActive]} onPress={() => changeTransportMode('bike')}>
                 <Ionicons name="bicycle-outline" size={18} color={transportMode === 'bike' ? '#FFF' : '#666'} />
-                <Text style={[styles.transportBtnText, transportMode === 'bike' && styles.transportBtnTextActive]}>Bici</Text>
+                <Text style={[styles.transportBtnText, transportMode === 'bike' && styles.transportBtnTextActive]}>{t('map.transport.bike')}</Text>
               </TouchableOpacity>
             </View>
 
@@ -227,19 +230,19 @@ export default function ExploreScreen() {
                 <View style={styles.metricItem}>
                   <Ionicons name="map-outline" size={18} color="#2196F3" />
                   <Text style={styles.metricValue}>{routeData.distanceKm} km</Text>
-                  <Text style={styles.metricLabel}>Distancia</Text>
+                  <Text style={styles.metricLabel}>{t('map.distance')}</Text>
                 </View>
                 <View style={styles.metricDivider} />
                 <View style={styles.metricItem}>
                   <Ionicons name="time-outline" size={18} color="#2196F3" />
                   <Text style={styles.metricValue}>{routeData.durationMin} min</Text>
-                  <Text style={styles.metricLabel}>Tiempo est.</Text>
+                  <Text style={styles.metricLabel}>{t('map.estimatedTime')}</Text>
                 </View>
               </View>
             ) : (
               <View style={styles.metricsRow}>
                 <ActivityIndicator size="small" color="#2196F3" />
-                <Text style={{ marginLeft: 10, color: '#A0AEC0' }}>Calculando ruta...</Text>
+                <Text style={{ marginLeft: 10, color: '#A0AEC0' }}>{t('map.calculatingRoute')}</Text>
               </View>
             )}
 
@@ -249,14 +252,14 @@ export default function ExploreScreen() {
               onPress={iniciarNavegacion}
             >
               <Ionicons name="navigate" size={20} color="#FFF" style={{ marginRight: 6 }} />
-              <Text style={styles.btnPrimaryText}>Iniciar Navegación</Text>
+              <Text style={styles.btnPrimaryText}>{t('map.startNavigation')}</Text>
             </TouchableOpacity>
           </View>
         )}
         {/* ============================================================ */}
         
         {/* ============================================================ */}
-        {/* Botón flotante para finalizar navegación y restaurar los lugares */}
+        {/* Botón  para finalizar navegación y restaurar los lugares */}
         {/* ============================================================ */}
         {isNavigating && (
           <TouchableOpacity
@@ -267,7 +270,7 @@ export default function ExploreScreen() {
             }}
           >
             <Ionicons name="stop-circle" size={20} color="#FFF" style={{ marginRight: 6 }} />
-            <Text style={{ color: '#FFF', fontWeight: 'bold' }}>Finalizar Navegación</Text>
+            <Text style={{ color: '#FFF', fontWeight: 'bold' }}>{t('map.endNavigation')}</Text>
           </TouchableOpacity>
         )}
         {/* ============================================================ */}
@@ -279,7 +282,7 @@ export default function ExploreScreen() {
 }
 
 // ============================================================
-// Estilos del componente Mapa y de sus elementos flotantes
+// estilos del componente Mapa y de sus elementos flotantes
 // ============================================================
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F5F7FA' },
@@ -362,4 +365,3 @@ const styles = StyleSheet.create({
     zIndex: 100,
   },
 });
-// ============================================================

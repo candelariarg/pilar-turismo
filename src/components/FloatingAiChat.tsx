@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -19,18 +20,29 @@ interface Message {
 }
 
 export const FloatingAiChat: React.FC = () => {
+  const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', text: '¡Hola! ¿En qué puedo ayudarte hoy sobre Pilar?' },
+    { role: 'assistant', text: t('chat.initialMessage') },
   ]);
+
+  // Sincronizar el mensaje inicial si no ha habido interacción todavía
+  useEffect(() => {
+    setMessages((prev) => {
+      if (prev.length <= 1) {
+        return [{ role: 'assistant', text: t('chat.initialMessage') }];
+      }
+      return prev;
+    });
+  }, [t]);
 
   // Consulta simple a la API de DeepSeek
   const askDeepSeek = async (text: string): Promise<string> => {
     const apiKey = process.env.EXPO_PUBLIC_DEEPSEEK_API_KEY;
     if (!apiKey) {
-      return 'Falta configurar EXPO_PUBLIC_DEEPSEEK_API_KEY en tu archivo .env';
+      return t('chat.noApiKey');
     }
 
     try {
@@ -45,7 +57,7 @@ export const FloatingAiChat: React.FC = () => {
           messages: [
             {
               role: 'system',
-              content: 'Eres el asistente turístico oficial de Pilar, Buenos Aires. Responde de forma amable y concisa.',
+              content: t('chat.systemPrompt'),
             },
             ...messages.map((m) => ({ role: m.role, content: m.text })),
             { role: 'user', content: text },
@@ -54,9 +66,9 @@ export const FloatingAiChat: React.FC = () => {
       });
 
       const data = await response.json();
-      return data.choices?.[0]?.message?.content || 'No pude obtener una respuesta.';
+      return data.choices?.[0]?.message?.content || t('chat.noReply');
     } catch {
-      return 'Hubo un error de conexión con la IA.';
+      return t('chat.errorConnection');
     }
   };
 
@@ -89,7 +101,7 @@ export const FloatingAiChat: React.FC = () => {
           >
             {/* Cabecera */}
             <View style={styles.header}>
-              <Text style={styles.headerTitle}>Guía Virtual de Pilar</Text>
+              <Text style={styles.headerTitle}>{t('chat.title')}</Text>
               <TouchableOpacity onPress={() => setVisible(false)}>
                 <Text style={styles.closeBtn}>✕</Text>
               </TouchableOpacity>
@@ -118,7 +130,7 @@ export const FloatingAiChat: React.FC = () => {
             <View style={styles.inputRow}>
               <TextInput
                 style={styles.input}
-                placeholder="Escribe tu consulta..."
+                placeholder={t('chat.placeholder')}
                 placeholderTextColor="#888"
                 value={input}
                 onChangeText={setInput}

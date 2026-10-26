@@ -5,10 +5,15 @@
     "weather": "Weather",
     "profile": "Profile"
   },
+  "header": {
+    "subtitle": "Discover the city"
+  },
   "home": {
     "welcomeTitle": "Welcome to Pilar!",
     "welcomeSubtitle": "Discover the history, gastronomy, and nature of our city",
     "searchPlaceholder": "Search places, restaurants, events...",
+    "historicPlaces": "Local historic places",
+    "popularPlaces": "Popular places",
     "featuredSection": "Featured Places",
     "categoriesSection": "Main Categories",
     "upcomingEvents": "Upcoming Events",
@@ -16,10 +21,26 @@
   },
   "map": {
     "title": "Explore Pilar",
-    "searchPlaceholder": "Search point of interest...",
+    "searchPlaceholder": "Search in Pilar... (e.g. pharmacy, museum)",
     "location": "Location",
+    "searchingGps": "Searching GPS satellites...",
+    "distance": "Distance",
+    "estimatedTime": "Est. time",
+    "calculatingRoute": "Calculating route...",
+    "startNavigation": "Start Navigation",
+    "endNavigation": "End Navigation",
+    "transport": {
+      "car": "Car",
+      "walk": "Walking",
+      "bike": "Cycling"
+    },
     "categories": {
       "all": "All",
+      "hospital": "Hospitals",
+      "police": "Police stations",
+      "supermarket": "Supermarkets",
+      "restaurant": "Restaurants",
+      "park": "Parks",
       "gastronomy": "Gastronomy",
       "history": "History & Culture",
       "nature": "Parks & Nature",
@@ -37,6 +58,31 @@
   },
   "weather": {
     "title": "Weather in Pilar",
+    "today": "Today",
+    "max": "Max",
+    "min": "Min",
+    "feelsLikeText": "Feels like",
+    "hourlyForecast": "HOURLY FORECAST",
+    "dailyForecast": "7-DAY FORECAST",
+    "additionalInfo": "ADDITIONAL INFORMATION",
+    "windLabel": "WIND",
+    "feelsLikeLabel": "FEELS LIKE",
+    "conditions": {
+      "sunny": "Sunny",
+      "partlyCloudy": "Partly cloudy",
+      "cloudy": "Cloudy",
+      "fog": "Fog",
+      "rain": "Rain"
+    },
+    "days": {
+      "sun": "Sun",
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat"
+    },
     "currentTemperature": "Current temperature",
     "feelsLike": "Feels like",
     "humidity": "Humidity",
@@ -64,6 +110,15 @@
     "logout": "Log Out",
     "logoutConfirm": "Are you sure you want to log out?"
   },
+  "chat": {
+    "title": "Pilar Virtual Guide",
+    "placeholder": "Type your query...",
+    "initialMessage": "Hello! How can I help you today regarding Pilar?",
+    "noApiKey": "Missing EXPO_PUBLIC_DEEPSEEK_API_KEY in your .env file",
+    "noReply": "Could not get a response.",
+    "errorConnection": "Connection error with AI.",
+    "systemPrompt": "You are the official tourist assistant of Pilar, Buenos Aires. Respond kindly and concisely in English."
+  },
   "common": {
     "loading": "Loading...",
     "error": "An error occurred. Please try again.",
@@ -72,6 +127,7 @@
     "confirm": "Confirm",
     "accept": "Accept",
     "back": "Back",
-    "search": "Search"
+    "search": "Search",
+    "galleryPermission": "Gallery permission is required."
   }
 }

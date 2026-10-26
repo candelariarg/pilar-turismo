@@ -128,6 +128,30 @@ const generateMapHTML = (
     : '';
   // ============================================================
 
+  // ============================================================
+  // Auto-encuadre  para resultados de búsqueda y filtros
+  // Si no hay ruta pero hay lugares encontrados, la cámara vuela suavemente (flyToBounds)
+  // ============================================================
+  const placesBoundsJS = (!routeData && places && places.length > 0)
+    ? `
+      (function() {
+        var coords = [${places.map(p => `[${p.latitude},${p.longitude}]`).join(',')}];
+        if (coords.length > 1) {
+          var bounds = L.latLngBounds(coords);
+          map.flyToBounds(bounds, {
+            paddingTopLeft: [80, 40],
+            paddingBottomRight: [40, 40],
+            maxZoom: 16,
+            duration: 1.2
+          });
+        } else if (coords.length === 1) {
+          map.flyTo(coords[0], 16, { duration: 1.2 });
+        }
+      })();
+    `
+    : '';
+  // ============================================================
+
   return `
     <!DOCTYPE html>
     <html>
@@ -233,6 +257,9 @@ const generateMapHTML = (
 
         // Marcadores de los lugares turísticos
         ${markersJS}
+
+        // Auto-encuadre fluido para búsquedas y filtros
+        ${placesBoundsJS}
 
         // Trazado de ruta + pin animado + fitBounds automático
         ${routeJS}

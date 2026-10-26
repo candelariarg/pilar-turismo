@@ -19,7 +19,7 @@ export default function PerfilScreen() {
   const cambiarFotoPerfil = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
-      Alert.alert(t('common.error'), 'Se requiere acceso a la galería.');
+      Alert.alert(t('common.error'), t('common.galleryPermission'));
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
