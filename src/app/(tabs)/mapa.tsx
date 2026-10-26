@@ -11,7 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { ThemedView } from '@/src/components/themed-view';
 import { SwipeableScreen } from '@/src/components/swipeable-screen';
-import { AppHeader } from '../components/app-header';
+import { AppHeader } from '../../components/app-header';
 
 const { width } = Dimensions.get('window');
 
@@ -117,7 +117,7 @@ export default function ExploreScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SwipeableScreen currentTab="explore">
+      <SwipeableScreen currentTab="mapa">
         <SafeAreaView style={styles.safeArea} edges={['top']}>
           <AppHeader />
 
