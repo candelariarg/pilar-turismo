@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "dependencies": {
     "@ai-sdk/deepseek": "^3.0.56",
+<<<<<<< HEAD
     "@expo/ui": "~58.0.23",
     "@expo/vector-icons": "^15.0.2",
     "expo": "~58.0.19",
@@ -22,6 +23,26 @@
     "expo-symbols": "~58.0.4",
     "expo-system-ui": "~58.0.6",
     "expo-web-browser": "~58.0.6",
+=======
+    "@expo/ui": "~58.0.0",
+    "@expo/vector-icons": "^15.0.2",
+    "expo": "^58.0.19",
+    "expo-constants": "~58.0.0",
+    "expo-device": "~58.0.0",
+    "expo-font": "~58.0.0",
+    "expo-glass-effect": "~58.0.0",
+    "expo-haptics": "~58.0.0",
+    "expo-image": "~58.0.0",
+    "expo-image-picker": "~58.0.0",
+    "expo-linking": "~58.0.0",
+    "expo-localization": "~58.0.0",
+    "expo-router": "~58.0.0",
+    "expo-splash-screen": "~58.0.0",
+    "expo-status-bar": "~58.0.0",
+    "expo-symbols": "~58.0.0",
+    "expo-system-ui": "~58.0.0",
+    "expo-web-browser": "~58.0.0",
+>>>>>>> d550377b3eddc1498f39441074a4a3124c009f96
     "firebase": "^12.18.0",
     "formik": "^2.4.9",
     "i18next": "^26.4.2",
@@ -33,10 +54,15 @@
     "react-native-reanimated": "4.7.1",
     "react-native-safe-area-context": "~5.10.1",
     "react-native-screens": "~4.30.0",
+<<<<<<< HEAD
     "react-native-vector-icons": "^10.3.0",
     "react-native-web": "^0.21.4",
     "react-native-worklets": "0.13.0",
     "yup": "^1.7.1"
+=======
+    "react-native-web": "^0.21.4",
+    "react-native-worklets": "0.13.0"
+>>>>>>> d550377b3eddc1498f39441074a4a3124c009f96
   },
   "devDependencies": {
     "@types/react": "~19.3.0",
