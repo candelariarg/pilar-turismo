@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {Text,ActivityIndicator,StyleSheet,View,ScrollView,} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
+import { AppHeader } from '@/src/components/app-header';
 // INTERFACES DE TYPESCRIPT
 //Definen la estructura exacta de los datos para evitar errores de tipo
 interface PronosticoHora {
@@ -116,6 +116,7 @@ export default function ClimaScreen() {
   return (
     <View style={styles.mainContainer}>
       <SafeAreaView style={styles.safeArea}>
+        <AppHeader />
         {cargando ? (
           // Vista de carga mientras responde la API
           <View style={styles.loaderContainer}>

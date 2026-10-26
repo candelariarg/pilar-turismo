@@ -146,7 +146,7 @@ export const FloatingAiChat: React.FC = () => {
 const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
-    bottom: 24,
+    bottom: 105,
     right: 24,
     width: 56,
     height: 56,
