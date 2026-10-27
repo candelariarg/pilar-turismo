@@ -131,7 +131,7 @@ export default function ClimaScreen() {
             {/* Cabecera de Pilar y temperatura actual */}
             <View style={styles.header}>
               <View style={styles.badgePilar}>
-                <Text style={styles.badgeTexto}>PILAR TURISMO</Text>
+                <Text style={styles.badgeTexto}>PaseAR</Text>
               </View>
 
               <Text style={styles.ciudad}>Pilar, Buenos Aires</Text>

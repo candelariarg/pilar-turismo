@@ -89,7 +89,7 @@ export const FloatingAiChat: React.FC = () => {
           >
             {/* Cabecera */}
             <View style={styles.header}>
-              <Text style={styles.headerTitle}>Guía Virtual de Pilar</Text>
+              <Text style={styles.headerTitle}>Guía Virtual</Text>
               <TouchableOpacity onPress={() => setVisible(false)}>
                 <Text style={styles.closeBtn}>✕</Text>
               </TouchableOpacity>
