@@ -1,27 +1,70 @@
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { FloatingAiChat } from '@/src/components/FloatingAiChat';
-import { AppHeader } from '@/src/components/app-header';
-// Inicializamos el motor i18n globalmente al arrancar
-import '@/src/i18n';
+import { useEffect } from "react";
+import * as SplashScreen from "expo-splash-screen";
+import {
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider,
+} from "expo-router/react-navigation";
+import { Stack } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import "react-native-reanimated";
+import "@/src/i18n";
 
-// Importamos el componente de pestañas unificado
-import AppTabs from '@/src/components/app-tabs';
-import { View } from 'react-native';
+import { useColorScheme } from "@/src/hooks/use-color-scheme";
+import { AuthProvider, useAuth } from "@/src/contexts/AuthContext";
+import { ActivityIndicator, View } from "react-native";
 
 SplashScreen.preventAutoHideAsync();
 
-export default function TabLayout() {
+export const unstable_settings = {
+  anchor: "(tabs)",
+};
+
+function RootLayoutNav() {
+  const { user, loading } = useAuth();
+  const colorScheme = useColorScheme();
+
   useEffect(() => {
-    SplashScreen.hideAsync();
-  }, []);
+    if (!loading) {
+      SplashScreen.hideAsync();
+    }
+  }, [loading]);
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#007AFF" />
+      </View>
+    );
+  }
 
   return (
-    <SafeAreaProvider>
-      
-      <AppTabs />
-      <FloatingAiChat />
-    </SafeAreaProvider>
+    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+      <Stack>
+        <Stack.Protected guard={!!user}>
+          {/* Boolean(user) */}
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="modal"
+            options={{ presentation: "modal", title: "Modal" }}
+          />
+        </Stack.Protected>
+
+        <Stack.Protected guard={!user}>
+          <Stack.Screen name="login" options={{ headerShown: false }} />
+          <Stack.Screen name="register" options={{ headerShown: false }} />
+        </Stack.Protected>
+      </Stack>
+
+      <StatusBar style="auto" />
+    </ThemeProvider>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <AuthProvider>
+      <RootLayoutNav />
+    </AuthProvider>
   );
 }

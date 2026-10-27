@@ -1,10 +1,10 @@
 import React, { useRef } from 'react';
 import { View, StyleSheet, PanResponder, StyleProp, ViewStyle } from 'react-native';
-import { useNavigation, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 
-export type TabRouteName = 'index' | 'explore' | 'clima' | 'perfil';
+export type TabRouteName = 'index' | 'mapa' | 'clima' | 'perfil';
 
-const TAB_ORDER: TabRouteName[] = ['index', 'explore', 'clima', 'perfil'];
+const TAB_ORDER: TabRouteName[] = ['index', 'mapa', 'clima', 'perfil'];
 
 interface SwipeableScreenProps {
   children: React.ReactNode;
@@ -13,7 +13,6 @@ interface SwipeableScreenProps {
 }
 
 export function SwipeableScreen({ children, currentTab, style }: SwipeableScreenProps) {
-  const navigation = useNavigation<any>();
   const router = useRouter();
   const isNavigatingRef = useRef(false);
 
@@ -21,15 +20,7 @@ export function SwipeableScreen({ children, currentTab, style }: SwipeableScreen
     if (isNavigatingRef.current) return;
     isNavigatingRef.current = true;
 
-    try {
-      if (navigation && typeof navigation.navigate === 'function') {
-        navigation.navigate(target);
-      } else {
-        router.replace(target === 'index' ? '/' : `/${target}`);
-      }
-    } catch {
-      router.replace(target === 'index' ? '/' : `/${target}`);
-    }
+    router.replace(target === 'index' ? '/' : `/${target}`);
 
     setTimeout(() => {
       isNavigatingRef.current = false;
