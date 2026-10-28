@@ -23,7 +23,7 @@ export const FloatingAiChat: React.FC = () => {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', text: '¡Hola! ¿En qué puedo ayudarte hoy sobre Pilar?' },
+    { role: 'assistant', text: 'Hola! En qué puedo guiarte?' },
   ]);
 
   // Consulta simple a la API de DeepSeek

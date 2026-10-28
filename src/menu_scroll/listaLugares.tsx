@@ -9,31 +9,29 @@ import {
   ListRenderItem,
   Image,
   Dimensions,
+  Pressable,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../configuracion/FirebaseConfig';
 import { useTranslation } from 'react-i18next';
 import { imagenesLugares } from './configImagenes';
+import EmergenteLugares, { Lugar } from './emergenteLugares';
+
+//ruta de la pantalla del mapa (cambiala por la que uses en tu app)
+const RUTA_MAPA = '/mapa';
 
 //obtenemos el ancho de la pantalla para darle un tamaño proporcional a las tarjetas
 const { width } = Dimensions.get('window');
 
-interface Lugar {
-  id: string;
-  Nombre: string;
-  Direccion: string;
-  Descripcion?: string;
-  imagen_ruta?: string | null;
-  imagen_uri?: string | null;
-}
-
 interface SeccionProps {
   coleccion: string; //nombre de la colección en firestore
   titulo: string; //título que se muestra arriba del menú
+  onSeleccionar: (lugar: Lugar) => void; //se llama al tocar una tarjeta
 }
 
 //titulo + menu horizontal
-const SeccionLugares = ({ coleccion, titulo }: SeccionProps) => {
+const SeccionLugares = ({ coleccion, titulo, onSeleccionar }: SeccionProps) => {
   const { t } = useTranslation();
   const [lugares, setLugares] = useState<Lugar[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -65,7 +63,10 @@ const SeccionLugares = ({ coleccion, titulo }: SeccionProps) => {
   }, [coleccion]);
 
   const renderItem: ListRenderItem<Lugar> = ({ item }) => (
-    <View style={styles.card}>
+    <Pressable
+      onPress={() => onSeleccionar(item)}
+      style={({ pressed }) => [styles.card, pressed && styles.cardPresionada]}
+    >
       <Image
         source={
           item.imagen_uri
@@ -88,7 +89,7 @@ const SeccionLugares = ({ coleccion, titulo }: SeccionProps) => {
           {item.Descripcion}
         </Text>
       ) : null}
-    </View>
+    </Pressable>
   );
 
   return (
@@ -118,22 +119,47 @@ const SeccionLugares = ({ coleccion, titulo }: SeccionProps) => {
 
 const LugaresIniciales = () => {
   const { t } = useTranslation();
+  const router = useRouter();
+
+  //lugar que se está mostrando en la ventana emergente (null = cerrada)
+  const [lugarSeleccionado, setLugarSeleccionado] = useState<Lugar | null>(null);
+
+  const irAlMapa = (lugar: Lugar) => {
+    setLugarSeleccionado(null); //cerramos la ventana antes de navegar
+    router.push({
+      pathname: RUTA_MAPA,
+      params: {
+        nombre: lugar.Nombre,
+        direccion: lugar.Direccion,
+      },
+    });
+  };
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.scrollContent}
-    >
-      <SeccionLugares
-        coleccion="lugares historicos"
-        titulo={t('home.historicPlaces', 'Lugares históricos locales')}
-      />
+    <>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <SeccionLugares
+          coleccion="lugares historicos"
+          titulo={t('home.historicPlaces', 'Lugares históricos locales')}
+          onSeleccionar={setLugarSeleccionado}
+        />
 
-      <SeccionLugares
-        coleccion="lugares populares"
-        titulo={t('home.popularPlaces', 'Lugares populares')}
+        <SeccionLugares
+          coleccion="lugares populares"
+          titulo={t('home.popularPlaces', 'Lugares populares')}
+          onSeleccionar={setLugarSeleccionado}
+        />
+      </ScrollView>
+
+      <EmergenteLugares
+        lugar={lugarSeleccionado}
+        onCerrar={() => setLugarSeleccionado(null)}
+        onVerMapa={irAlMapa}
       />
-    </ScrollView>
+    </>
   );
 };
 
@@ -166,12 +192,15 @@ const styles = StyleSheet.create({
     padding: 15, //espacio interno de la tarjeta
     borderRadius: 8, //bordes redondeados
     marginRight: 12, //espacio entre tarjetas
-    width: width * 0.60, //cada tarjeta ocupa el 35% del ancho de la pantalla
+    width: width * 0.30, //cada tarjeta ocupa el 30% del ancho de la pantalla
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+  },
+  cardPresionada: {
+    opacity: 0.8, //efecto visual al tocar la tarjeta
   },
   imagen: {
     width: '100%',
