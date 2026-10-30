@@ -20,7 +20,7 @@ export const useMaps = () => {
     // ============================================================
 
     // ============================================================
-    // 1. Obtener Ubicación del Usuario al iniciar y cargar lugares iniciales
+    // 1. Obtener Ubicación del Usuario al iniciar el mapa (sin cargar lugares automáticos)
     // ============================================================
     useEffect(() => {
         (async () => {
@@ -34,12 +34,11 @@ export const useMaps = () => {
                 }
 
                 let location = await Location.getCurrentPositionAsync({});
-                setUserLocation({
+                const coords: LocationCoords = {
                     latitude: location.coords.latitude,
                     longitude: location.coords.longitude,
-                });
-                
-                await loadPlaces('all');
+                };
+                setUserLocation(coords);
 
             } catch (error) {
                 setErrorMsg('Error al obtener la ubicación');
@@ -54,12 +53,13 @@ export const useMaps = () => {
     // ============================================================
     // 2. Función para cargar lugares según la categoría seleccionada
     // ============================================================
-    const loadPlaces = async (category: PlaceCategory) => {
+    const loadPlaces = async (category: PlaceCategory, overrideLocation?: LocationCoords) => {
         setLoading(true);
         setRouteData(null); 
         setSelectedPlace(null);
 
-        const fetchedPlaces = await fetchPlacesOSM(category);
+        const loc = overrideLocation || userLocation;
+        const fetchedPlaces = await fetchPlacesOSM(category, loc);
         setPlaces(fetchedPlaces);
         setLoading(false);
     };
@@ -74,7 +74,7 @@ export const useMaps = () => {
         setRouteData(null);
         setSelectedPlace(null);
         
-        const fetchedPlaces = await searchPlacesOSM(query);
+        const fetchedPlaces = await searchPlacesOSM(query, userLocation);
         setPlaces(fetchedPlaces);
         setLoading(false);
     };
@@ -118,6 +118,16 @@ export const useMaps = () => {
     };
     // ============================================================
 
+    // ============================================================
+    // 7. Función para limpiar los lugares marcados en el mapa
+    // ============================================================
+    const clearPlaces = () => {
+        setPlaces([]);
+        setSelectedPlace(null);
+        setRouteData(null);
+    };
+    // ============================================================
+
     return {
         userLocation,
         places,
@@ -130,6 +140,7 @@ export const useMaps = () => {
         searchPlaces,
         calculateRouteTo,
         changeTransportMode,
-        clearSelection
+        clearSelection,
+        clearPlaces,
     };
 };

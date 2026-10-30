@@ -106,27 +106,138 @@ export const fetchRouteOSRM = async (
 // ============================================================
 
 // ============================================================
-// Busca lugares (Puntos de Interés) por categoría usando Nominatim de OpenStreetMap
+// Función auxiliar para calcular distancia en km entre dos coordenadas (Fórmula Haversine)
 // ============================================================
-export const fetchPlacesOSM = async (category: PlaceCategory): Promise<Place[]> => {
-    try {
-        const queryTerm = category === 'all' ? 'tourist attractions' : category;
-        const q = `${queryTerm} in Pilar, Buenos Aires`;
-        const url = `${NOMINATIM_BASE_URL}?q=${encodeURIComponent(q)}&format=json&limit=15`;
+export const calculateDistanceKm = (
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number
+): number => {
+    const R = 6371; // Radio de la Tierra en km
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos((lat1 * Math.PI) / 180) *
+            Math.cos((lat2 * Math.PI) / 180) *
+            Math.sin(dLon / 2) *
+            Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+};
+// ============================================================
 
+// ============================================================
+// Construye el parámetro viewbox centrado en el usuario con un radio específico en km
+// ============================================================
+const buildViewbox = (location: LocationCoords, radiusKm: number): string => {
+    const deltaLat = radiusKm / 111;
+    const cosLat = Math.cos((location.latitude * Math.PI) / 180);
+    const deltaLon = radiusKm / (111 * (Math.abs(cosLat) || 0.8));
+
+    const minLon = (location.longitude - deltaLon).toFixed(6);
+    const maxLat = (location.latitude + deltaLat).toFixed(6);
+    const maxLon = (location.longitude + deltaLon).toFixed(6);
+    const minLat = (location.latitude - deltaLat).toFixed(6);
+    return `&viewbox=${minLon},${maxLat},${maxLon},${minLat}&bounded=1`;
+};
+// ============================================================
+
+// ============================================================
+// Consulta a Nominatim para un término específico y un radio determinado
+// ============================================================
+const executeQuery = async (
+    queryTerm: string,
+    location?: LocationCoords | null,
+    radiusKm: number = 6
+): Promise<NominatimPlaceResponse[]> => {
+    let url = `${NOMINATIM_BASE_URL}?q=${encodeURIComponent(queryTerm)}&format=json&limit=15`;
+    if (location) {
+        url += buildViewbox(location, radiusKm);
+    } else {
+        url = `${NOMINATIM_BASE_URL}?q=${encodeURIComponent(`${queryTerm} in Pilar, Santa Fe`)}&format=json&limit=15`;
+    }
+
+    try {
         const response = await fetch(url, {
             headers: {
                 'User-Agent': 'PilarTurismoApp/1.0',
             },
         });
+        if (!response.ok) return [];
+        return await response.json();
+    } catch (e) {
+        return [];
+    }
+};
+// ============================================================
 
-        if (!response.ok) throw new Error(`Error Nominatim: ${response.status}`);
+// ============================================================
+// Mapeo de categorías a términos de búsqueda reconocidos en OpenStreetMap
+// ============================================================
+const getCategoryQueries = (category: PlaceCategory): string[] => {
+    switch (category) {
+        case 'hospital': return ['hospital', 'clinica'];
+        case 'police': return ['police', 'comisaria'];
+        case 'supermarket': return ['supermarket', 'supermercado'];
+        case 'restaurant': return ['restaurant', 'restaurante'];
+        case 'park': return ['park', 'plaza'];
+        case 'tourism': return ['tourism', 'iglesia'];
+        case 'all': return ['tourism', 'attractions'];
+        default: return [category];
+    }
+};
+// ============================================================
 
-        const data: NominatimPlaceResponse[] = await response.json();
+// ============================================================
+// Busca lugares por categoría con prioridad absoluta a lo cercano (Google Maps style)
+// ============================================================
+export const fetchPlacesOSM = async (
+    category: PlaceCategory,
+    userLocation?: LocationCoords | null
+): Promise<Place[]> => {
+    try {
+        const queries = getCategoryQueries(category);
+        let data: NominatimPlaceResponse[] = [];
 
-        const lugaresFormateados: Place[] = data.map((item) => {
+        if (userLocation) {
+            // 1. PRIORIDAD ABSOLUTA LOCAL: Buscar dentro del radio cercano (6 km a la redonda)
+            for (const q of queries) {
+                const res = await executeQuery(q, userLocation, 6);
+                if (res && res.length > 0) {
+                    data = res;
+                    break;
+                }
+            }
+
+            // 2. Solo si no existe ningún lugar cercano en 6 km, expandir a radio medio (18 km)
+            if (data.length === 0) {
+                for (const q of queries) {
+                    const res = await executeQuery(q, userLocation, 18);
+                    if (res && res.length > 0) {
+                        data = res;
+                        break;
+                    }
+                }
+            }
+
+            // 3. Si aún no hay nada (ej: grandes hipermercados), buscar a nivel comarcal (35 km)
+            if (data.length === 0) {
+                for (const q of queries) {
+                    const res = await executeQuery(q, userLocation, 35);
+                    if (res && res.length > 0) {
+                        data = res;
+                        break;
+                    }
+                }
+            }
+        } else {
+            data = await executeQuery(queries[0], null);
+        }
+
+        let lugaresFormateados: Place[] = data.map((item) => {
             const shortName = item.name || item.display_name.split(',')[0];
-
             return {
                 id: item.place_id.toString(),
                 name: shortName,
@@ -138,6 +249,15 @@ export const fetchPlacesOSM = async (category: PlaceCategory): Promise<Place[]> 
             };
         });
 
+        // Ordenar siempre por proximidad estricta al usuario (el más cercano primero)
+        if (userLocation) {
+            lugaresFormateados.sort((a, b) => {
+                const distA = calculateDistanceKm(userLocation.latitude, userLocation.longitude, a.latitude, a.longitude);
+                const distB = calculateDistanceKm(userLocation.latitude, userLocation.longitude, b.latitude, b.longitude);
+                return distA - distB;
+            });
+        }
+
         return lugaresFormateados;
 
     } catch (error) {
@@ -148,24 +268,29 @@ export const fetchPlacesOSM = async (category: PlaceCategory): Promise<Place[]> 
 // ============================================================
 
 // ============================================================
-// Busca cualquier lugar por texto libre en Pilar usando OpenStreetMap (Nominatim)
+// Busca cualquier lugar por texto libre con prioridad a lo local
+// Solo si el usuario busca algo que no está en el radio local, se amplía
 // ============================================================
-export const searchPlacesOSM = async (query: string): Promise<Place[]> => {
+export const searchPlacesOSM = async (
+    query: string,
+    userLocation?: LocationCoords | null
+): Promise<Place[]> => {
     try {
-        const q = `${query} in Pilar, Buenos Aires`;
-        const url = `${NOMINATIM_BASE_URL}?q=${encodeURIComponent(q)}&format=json&limit=15`;
+        let data: NominatimPlaceResponse[] = [];
 
-        const response = await fetch(url, {
-            headers: {
-                'User-Agent': 'PilarTurismoApp/1.0',
-            },
-        });
+        if (userLocation) {
+            // 1. Prioridad: buscar primero en radio local cercano (8 km)
+            data = await executeQuery(query, userLocation, 8);
 
-        if (!response.ok) throw new Error(`Error Nominatim: ${response.status}`);
+            // 2. Si no se encontró nada localmente con ese nombre, ampliar a nivel regional (35 km)
+            if (!data || data.length === 0) {
+                data = await executeQuery(query, userLocation, 35);
+            }
+        } else {
+            data = await executeQuery(query, null);
+        }
 
-        const data: NominatimPlaceResponse[] = await response.json();
-
-        return data.map((item) => {
+        let lugaresFormateados: Place[] = data.map((item) => {
             const shortName = item.name || item.display_name.split(',')[0];
             return {
                 id: item.place_id.toString(),
@@ -177,6 +302,16 @@ export const searchPlacesOSM = async (query: string): Promise<Place[]> => {
                 address: item.display_name,
             };
         });
+
+        if (userLocation) {
+            lugaresFormateados.sort((a, b) => {
+                const distA = calculateDistanceKm(userLocation.latitude, userLocation.longitude, a.latitude, a.longitude);
+                const distB = calculateDistanceKm(userLocation.latitude, userLocation.longitude, b.latitude, b.longitude);
+                return distA - distB;
+            });
+        }
+
+        return lugaresFormateados;
     } catch (error) {
         console.error('Error al buscar lugares en Nominatim:', error);
         return [];

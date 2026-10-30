@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { LocationCoords, Place, RouteData } from '../servicios/map/type';
@@ -9,6 +9,7 @@ interface LeafletMapProps {
   selectedPlace?: Place | null;
   routeData: RouteData | null;
   onMarkerPress: (placeId: string) => void;
+  centerOnUser?: number; // incrementar este valor dispara el re-centro hacia el GPS
 }
 
 // Esta función genera todo el HTML + CSS + JavaScript del mapa Leaflet
@@ -129,8 +130,8 @@ const generateMapHTML = (
   // ============================================================
 
   // ============================================================
-  // Auto-encuadre  para resultados de búsqueda y filtros
-  // Si no hay ruta pero hay lugares encontrados, la cámara vuela suavemente (flyToBounds)
+  // Auto-encuadre fluido para resultados de búsqueda y filtros
+  // Limita el alejamiento mínimo (minZoom: 13) para evitar descargas pesadas y mantener fluidez
   // ============================================================
   const placesBoundsJS = (!routeData && places && places.length > 0)
     ? `
@@ -142,10 +143,11 @@ const generateMapHTML = (
             paddingTopLeft: [80, 40],
             paddingBottomRight: [40, 40],
             maxZoom: 16,
-            duration: 1.2
+            minZoom: 13,
+            duration: 1.0
           });
         } else if (coords.length === 1) {
-          map.flyTo(coords[0], 16, { duration: 1.2 });
+          map.flyTo(coords[0], 16, { duration: 1.0 });
         }
       })();
     `
@@ -238,11 +240,15 @@ const generateMapHTML = (
           zoomControl: false
         }).setView([${userLocation.latitude}, ${userLocation.longitude}], 14);
 
-        // Capa de mapas OpenStreetMap
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© OpenStreetMap',
+        // ============================================================
+        // Capa de mapas moderna estilo Humanitarian OSM (colores pastel y sin API key)
+        // ============================================================
+        L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap contributors, Tiles courtesy of Humanitarian OpenStreetMap Team',
+          subdomains: 'abc',
           maxZoom: 19
         }).addTo(map);
+        // ============================================================
 
         // Marcador del usuario (punto azul con pulsación)
         L.marker([${userLocation.latitude}, ${userLocation.longitude}], {
@@ -272,9 +278,24 @@ const generateMapHTML = (
 // ============================================================
 // Componente principal LeafletMap que renderiza el mapa dentro de un WebView
 // ============================================================
-export default function LeafletMap({ userLocation, places, selectedPlace, routeData, onMarkerPress }: LeafletMapProps) {
+export default function LeafletMap({ userLocation, places, selectedPlace, routeData, onMarkerPress, centerOnUser }: LeafletMapProps) {
 
+  const webViewRef = useRef<any>(null);
   const htmlContent = generateMapHTML(userLocation, places, routeData, selectedPlace);
+
+  // ============================================================
+  // Efecto que escucha el contador centerOnUser y vuela de vuelta al GPS del usuario
+  // ============================================================
+  useEffect(() => {
+    if (centerOnUser && centerOnUser > 0 && webViewRef.current) {
+      const js = `
+        map.flyTo([${userLocation.latitude}, ${userLocation.longitude}], 15, { duration: 1.0 });
+        true;
+      `;
+      webViewRef.current.injectJavaScript(js);
+    }
+  }, [centerOnUser]);
+  // ============================================================
 
   // Comunicación WebView -> React Native cuando el usuario toca un marcador
   const handleMessage = (event: any) => {
@@ -290,6 +311,7 @@ export default function LeafletMap({ userLocation, places, selectedPlace, routeD
 
   return (
     <WebView
+      ref={webViewRef}
       style={styles.map}
       originWhitelist={['*']}
       source={{ html: htmlContent }}
