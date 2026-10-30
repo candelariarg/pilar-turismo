@@ -7,15 +7,15 @@ export function AppHeader() {
   return (
     <View style={styles.barra}>
       <Image
-        source={require('@/assets/images/react-logo.png')}
+        source={require('@/assets/images/logoapp.jpg')}
         style={styles.logo}
         resizeMode="contain"
         accessibilityRole="image"
-        accessibilityLabel="Pilar Turismo"
+        accessibilityLabel="PaseAR"
       />
       <View>
         <Text style={styles.titulo}>Pilar Turismo</Text>
-        <Text style={styles.subtitulo}>{t('header.subtitle')}</Text>
+        <Text style={styles.subtitulo}>Descubrí la ciudad</Text>
       </View>
     </View>
   );

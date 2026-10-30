@@ -21,7 +21,7 @@ import { AppHeader } from '@/src/components/app-header';
 
 // Hooks y tipos de datos
 import { useMaps } from '@/src/hooks/useMaps';
-import { PlaceCategory } from '../servicios/map/type';
+import { PlaceCategory } from '@/src/servicios/map/type';
 
 export default function ExploreScreen() {
   const { t } = useTranslation();

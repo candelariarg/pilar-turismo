@@ -26,10 +26,21 @@ declare module 'expo-haptics' {
 declare module 'expo-router' {
   export type Href = string | object;
   export const Tabs: any;
+  export const Stack: any;
   export const Link: any;
   export const useRouter: any;
+  export const router: any;
   export const useLocalSearchParams: any;
   export const SplashScreen: any;
+  export const Slot: any;
+}
+
+declare module 'expo-router/react-navigation' {
+  export const ThemeProvider: any;
+  export const DarkTheme: any;
+  export const DefaultTheme: any;
+  export const useTheme: any;
+  export const useNavigation: any;
 }
 
 declare module 'firebase/app' {

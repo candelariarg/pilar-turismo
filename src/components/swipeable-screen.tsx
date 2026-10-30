@@ -20,12 +20,7 @@ export function SwipeableScreen({ children, currentTab, style }: SwipeableScreen
     if (isNavigatingRef.current) return;
     isNavigatingRef.current = true;
 
-    const route = target === 'index' ? '/' : `/${target}`;
-    try {
-      router.navigate(route as any);
-    } catch {
-      router.replace(route as any);
-    }
+    router.replace(target === 'index' ? '/' : `/${target}`);
 
     setTimeout(() => {
       isNavigatingRef.current = false;

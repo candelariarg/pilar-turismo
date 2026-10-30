@@ -25,7 +25,7 @@ export const FloatingAiChat: React.FC = () => {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', text: t('chat.initialMessage') },
+    { role: 'assistant', text: '¡Hola! ¿En qué puedo ayudarte hoy sobre Pilar?' },
   ]);
 
   // Sincronizar el mensaje inicial si no ha habido interacción todavía
@@ -101,7 +101,7 @@ export const FloatingAiChat: React.FC = () => {
           >
             {/* Cabecera */}
             <View style={styles.header}>
-              <Text style={styles.headerTitle}>{t('chat.title')}</Text>
+              <Text style={styles.headerTitle}>Guía Virtual de Pilar</Text>
               <TouchableOpacity onPress={() => setVisible(false)}>
                 <Text style={styles.closeBtn}>✕</Text>
               </TouchableOpacity>
