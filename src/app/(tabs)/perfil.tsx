@@ -42,7 +42,7 @@ export default function PerfilScreen() {
         {/* Encabezado Azul */}
         <View style={styles.header}>
           <Image
-            source={{ uri: imageUrl || 'https://picsum.photos/200' }}
+            source={imageUrl ? { uri: imageUrl } : require('@/assets/images/logos/usuario.png')}
             style={styles.avatarPlaceholder}
           />
           <Text style={styles.nombreUsuario}>{t('profile.userDefaultName')}</Text>

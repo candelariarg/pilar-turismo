@@ -6,7 +6,7 @@ import '@/src/i18n';
 
 // Importamos el componente de pestañas unificado
 import AppTabs from '@/src/components/app-tabs';
-import { View } from 'react-native';
+//import { View } from 'react-native';
 
 export default function TabLayout() {
   return (
