@@ -4,7 +4,7 @@ export function AppHeader() {
   return (
     <View style={styles.barra}>
       <Image
-        source={require('@/assets/images/logoapp.jpg')}
+        source={require('@/assets/images/logos/logoapp.jpg')}
         style={styles.logo}
         resizeMode="contain"
         accessibilityRole="image"
