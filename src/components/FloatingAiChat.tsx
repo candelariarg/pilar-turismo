@@ -12,66 +12,57 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
-
-interface Message {
-  role: 'user' | 'assistant';
-  text: string;
-}
+import { useAuth } from '@/src/contexts/AuthContext';
+import {
+  consultarGuia,
+  ErrorChat,
+  MAX_CARACTERES,
+  MAX_CONSULTAS_POR_SESION,
+  type MensajeChat,
+} from '@/src/servicios/ai/chatService';
 
 export const FloatingAiChat: React.FC = () => {
+  const { user } = useAuth();
+
   const [visible, setVisible] = useState(false);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
+  const [messages, setMessages] = useState<MensajeChat[]>([
     { role: 'assistant', text: 'Hola! En qué puedo guiarte?' },
   ]);
 
-  // Consulta simple a la API de DeepSeek
-  const askDeepSeek = async (text: string): Promise<string> => {
-    const apiKey = process.env.EXPO_PUBLIC_DEEPSEEK_API_KEY;
-    if (!apiKey) {
-      return 'Falta configurar EXPO_PUBLIC_DEEPSEEK_API_KEY en tu archivo .env';
-    }
-
-    try {
-      const response = await fetch('https://api.deepseek.com/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: 'deepseek-chat',
-          messages: [
-            {
-              role: 'system',
-              content: 'Eres el asistente turístico oficial de Pilar, Buenos Aires. Responde de forma amable y concisa.',
-            },
-            ...messages.map((m) => ({ role: m.role, content: m.text })),
-            { role: 'user', content: text },
-          ],
-        }),
-      });
-
-      const data = await response.json();
-      return data.choices?.[0]?.message?.content || 'No pude obtener una respuesta.';
-    } catch {
-      return 'Hubo un error de conexión con la IA.';
-    }
-  };
+  // La guía sólo responde a usuarios con sesión y con cupo disponible.
+  const consultasUsadas = messages.filter((m) => m.role === 'user').length;
+  const sinCupo = consultasUsadas >= MAX_CONSULTAS_POR_SESION;
+  const puedeEscribir = !!user && !loading && !sinCupo;
 
   const handleSend = async () => {
-    const text = input.trim();
-    if (!text || loading) return;
+    const texto = input.trim();
+    if (!texto || !puedeEscribir) return;
 
     setInput('');
-    setMessages((prev) => [...prev, { role: 'user', text }]);
+    setMessages((prev) => [...prev, { role: 'user', text: texto }]);
     setLoading(true);
 
-    const reply = await askDeepSeek(text);
-    setMessages((prev) => [...prev, { role: 'assistant', text: reply }]);
-    setLoading(false);
+    try {
+      const respuesta = await consultarGuia(texto, messages);
+      setMessages((prev) => [...prev, { role: 'assistant', text: respuesta }]);
+    } catch (e) {
+      const mensaje =
+        e instanceof ErrorChat
+          ? e.message
+          : 'Hubo un problema con la guía virtual.';
+      setMessages((prev) => [...prev, { role: 'assistant', text: mensaje }]);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const placeholder = !user
+    ? 'Iniciá sesión para consultar'
+    : sinCupo
+      ? 'Llegaste al límite de esta sesión'
+      : 'Escribe tu consulta...';
 
   return (
     <>
@@ -118,16 +109,18 @@ export const FloatingAiChat: React.FC = () => {
             <View style={styles.inputRow}>
               <TextInput
                 style={styles.input}
-                placeholder="Escribe tu consulta..."
+                placeholder={placeholder}
                 placeholderTextColor="#888"
                 value={input}
                 onChangeText={setInput}
-                editable={!loading}
+                editable={puedeEscribir}
+                maxLength={MAX_CARACTERES}
+                multiline={false}
               />
               <TouchableOpacity
-                style={[styles.sendBtn, (!input.trim() || loading) && styles.disabledBtn]}
+                style={[styles.sendBtn, (!puedeEscribir || !input.trim()) && styles.disabledBtn]}
                 onPress={handleSend}
-                disabled={!input.trim() || loading}
+                disabled={!puedeEscribir || !input.trim()}
               >
                 {loading ? (
                   <ActivityIndicator color="#fff" size="small" />
