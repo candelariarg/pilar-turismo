@@ -128,6 +128,92 @@ export const useMaps = () => {
     };
     // ============================================================
 
+    // Si ya hay un lugar seleccionado y la ubicación GPS recién termina de cargar,
+    // calculamos la ruta automáticamente hacia el destino
+    useEffect(() => {
+        if (userLocation && selectedPlace && !routeData) {
+            calculateRouteTo(selectedPlace, transportMode);
+        }
+    }, [userLocation]);
+
+    // ============================================================
+    // 8. Función para enfocar y marcar un lugar recibido desde otra pantalla
+    // ============================================================
+    const focusOnPlace = async (
+        nombre?: string,
+        direccion?: string,
+        lat?: number,
+        lon?: number
+    ): Promise<Place | null> => {
+        setLoading(true);
+        setRouteData(null);
+        setSelectedPlace(null);
+
+        // A. Si se enviaron coordenadas exactas
+        if (lat != null && lon != null && !isNaN(lat) && !isNaN(lon)) {
+            const place: Place = {
+                id: 'dest-' + Date.now(),
+                name: nombre || direccion || 'Lugar seleccionado',
+                category: 'all',
+                categoryName: 'Turismo',
+                latitude: lat,
+                longitude: lon,
+                address: direccion || nombre || '',
+            };
+            setPlaces([place]);
+            setSelectedPlace(place);
+            if (userLocation) {
+                const destination = { latitude: place.latitude, longitude: place.longitude };
+                const route = await fetchRouteOSRM(userLocation, destination, transportMode);
+                setRouteData(route);
+            }
+            setLoading(false);
+            return place;
+        }
+
+        // B. Si no hay coordenadas, buscamos con Nominatim priorizando el nombre del lugar
+        let found: Place[] = [];
+
+        // 1. Probar primero por el nombre directo (es el más exacto en OSM, ej: "Parroquia Nuestra Señora del Pilar")
+        if (nombre) {
+            found = await searchPlacesOSM(nombre, userLocation);
+            if (!found || found.length === 0) {
+                found = await searchPlacesOSM(`${nombre}, Pilar`, userLocation);
+            }
+        }
+
+        // 2. Si no hubo resultados con el nombre, buscar por dirección en Pilar
+        if ((!found || found.length === 0) && direccion) {
+            found = await searchPlacesOSM(`${direccion}, Pilar`, userLocation);
+            if (!found || found.length === 0) {
+                found = await searchPlacesOSM(direccion, userLocation);
+            }
+        }
+
+        if (found && found.length > 0) {
+            const target = found[0];
+            if (nombre) {
+                target.name = nombre;
+            }
+            if (direccion) {
+                target.address = direccion;
+            }
+            setPlaces([target]);
+            setSelectedPlace(target);
+            if (userLocation) {
+                const destination = { latitude: target.latitude, longitude: target.longitude };
+                const route = await fetchRouteOSRM(userLocation, destination, transportMode);
+                setRouteData(route);
+            }
+            setLoading(false);
+            return target;
+        }
+
+        setLoading(false);
+        return null;
+    };
+    // ============================================================
+
     return {
         userLocation,
         places,
@@ -142,5 +228,6 @@ export const useMaps = () => {
         changeTransportMode,
         clearSelection,
         clearPlaces,
+        focusOnPlace,
     };
 };

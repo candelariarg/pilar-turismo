@@ -1,4 +1,5 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
+import { useLocalSearchParams } from 'expo-router';
 import {
   StyleSheet,
   View,
@@ -26,6 +27,15 @@ import { PlaceCategory } from '@/src/servicios/map/type';
 export default function ExploreScreen() {
   const { t } = useTranslation();
 
+  // Parámetros recibidos desde otras pantallas (ej: al tocar una dirección en Inicio)
+  const params = useLocalSearchParams() as {
+    nombre?: string;
+    direccion?: string;
+    lat?: string;
+    lon?: string;
+  };
+  const lastProcessedParamRef = useRef<string | null>(null);
+
   // ============================================================
   // Estados para categoría, modo de navegación y búsqueda interactiva
   // ============================================================
@@ -34,6 +44,7 @@ export default function ExploreScreen() {
   const [showNavAlert, setShowNavAlert] = useState(false);
   const [textoBusqueda, setTextoBusqueda] = useState('');
   const [centrarEnUsuario, setCentrarEnUsuario] = useState(0); // contador para disparar re-center
+  const [cardHeight, setCardHeight] = useState(0);
   // ============================================================
 
   // ============================================================
@@ -53,7 +64,33 @@ export default function ExploreScreen() {
     changeTransportMode,
     clearSelection,
     clearPlaces,
+    focusOnPlace,
   } = useMaps();
+  // ============================================================
+
+  // ============================================================
+  // Si llegamos a la pantalla del mapa con un lugar específico desde Inicio,
+  // lo marcamos, lo enfocamos y trazamos la ruta hacia él
+  // ============================================================
+  useEffect(() => {
+    const hasTarget = Boolean(params.nombre || params.direccion || params.lat);
+    if (!hasTarget) return;
+
+    const paramKey = `${params.nombre ?? ''}|${params.direccion ?? ''}|${params.lat ?? ''}|${params.lon ?? ''}`;
+    if (lastProcessedParamRef.current === paramKey && selectedPlace) return;
+    lastProcessedParamRef.current = paramKey;
+
+    if (params.nombre) {
+      setTextoBusqueda(params.nombre);
+    } else if (params.direccion) {
+      setTextoBusqueda(params.direccion);
+    }
+
+    const latNum = params.lat ? parseFloat(params.lat) : undefined;
+    const lonNum = params.lon ? parseFloat(params.lon) : undefined;
+
+    focusOnPlace(params.nombre, params.direccion, latNum, lonNum);
+  }, [params.nombre, params.direccion, params.lat, params.lon, userLocation]);
   // ============================================================
 
   // ============================================================
@@ -212,7 +249,7 @@ export default function ExploreScreen() {
               <TouchableOpacity
                 style={[
                   styles.btnMiUbicacion,
-                  selectedPlace && { bottom: 275 }
+                  selectedPlace && { bottom: cardHeight > 0 ? cardHeight + 16 : 340 }
                 ]}
                 onPress={() => setCentrarEnUsuario(n => n + 1)}
                 activeOpacity={0.8}
@@ -230,7 +267,13 @@ export default function ExploreScreen() {
           {/* Se oculta automáticamente cuando inicia la navegación */}
           {/* ============================================================ */}
           {selectedPlace && !isNavigating && (
-            <View style={styles.cardInfo}>
+            <View
+              style={styles.cardInfo}
+              onLayout={(e) => {
+                const h = e.nativeEvent.layout.height;
+                if (h > 0) setCardHeight(h);
+              }}
+            >
 
               {/* Barrita de arrastre (drag handle) estilo Material Design */}
               <View style={styles.dragHandle} />
@@ -415,7 +458,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 6,
+    elevation: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.2,

@@ -6,13 +6,14 @@ import {
   TouchableOpacity,
   Modal,
   FlatList,
-  SafeAreaView,
+
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface Message {
   role: 'user' | 'assistant';

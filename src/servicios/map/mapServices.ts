@@ -144,6 +144,9 @@ const buildViewbox = (location: LocationCoords, radiusKm: number): string => {
 };
 // ============================================================
 
+// Coordenadas geográficas por defecto del centro de Pilar, Buenos Aires
+const PILAR_CENTRO_COORDS: LocationCoords = { latitude: -34.4587, longitude: -58.9142 };
+
 // ============================================================
 // Consulta a Nominatim para un término específico y un radio determinado
 // ============================================================
@@ -152,12 +155,9 @@ const executeQuery = async (
     location?: LocationCoords | null,
     radiusKm: number = 6
 ): Promise<NominatimPlaceResponse[]> => {
-    let url = `${NOMINATIM_BASE_URL}?q=${encodeURIComponent(queryTerm)}&format=json&limit=15`;
-    if (location) {
-        url += buildViewbox(location, radiusKm);
-    } else {
-        url = `${NOMINATIM_BASE_URL}?q=${encodeURIComponent(`${queryTerm} in Pilar, Santa Fe`)}&format=json&limit=15`;
-    }
+    // Si no tenemos ubicación GPS todavía, delimitamos la búsqueda al centro de Pilar
+    const loc = location || PILAR_CENTRO_COORDS;
+    const url = `${NOMINATIM_BASE_URL}?q=${encodeURIComponent(queryTerm)}&format=json&limit=15${buildViewbox(loc, radiusKm)}`;
 
     try {
         const response = await fetch(url, {
@@ -278,16 +278,13 @@ export const searchPlacesOSM = async (
     try {
         let data: NominatimPlaceResponse[] = [];
 
-        if (userLocation) {
-            // 1. Prioridad: buscar primero en radio local cercano (8 km)
-            data = await executeQuery(query, userLocation, 8);
+        const loc = userLocation || PILAR_CENTRO_COORDS;
+        // 1. Prioridad: buscar primero en radio local cercano (8 km)
+        data = await executeQuery(query, loc, 8);
 
-            // 2. Si no se encontró nada localmente con ese nombre, ampliar a nivel regional (35 km)
-            if (!data || data.length === 0) {
-                data = await executeQuery(query, userLocation, 35);
-            }
-        } else {
-            data = await executeQuery(query, null);
+        // 2. Si no se encontró nada localmente con ese nombre, ampliar a nivel regional (35 km)
+        if (!data || data.length === 0) {
+            data = await executeQuery(query, loc, 35);
         }
 
         let lugaresFormateados: Place[] = data.map((item) => {
