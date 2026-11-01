@@ -1,198 +1,177 @@
 import { useState } from "react";
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Link, router } from "expo-router";
 import { useAuth } from "@/src/contexts/AuthContext";
+import { authStyles as s } from "@/src/constants/auth-styles";
+import {
+  codigoDeError,
+  mensajeDeErrorFirebase,
+  validarConfirmacion,
+  validarEmail,
+  validarPassword,
+} from "@/src/utils/validaciones";
 
 export default function RegisterScreen() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [loading, setLoading] = useState(false);
   const { register } = useAuth();
 
-  const handleRegister = async () => {
-    if (!email.trim() || !password.trim() || !confirmPassword.trim()) {
-      Alert.alert("Error", "Please fill out all fields");
-      return;
-    }
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmacion, setConfirmacion] = useState("");
+  const [errorEmail, setErrorEmail] = useState<string | null>(null);
+  const [errorPassword, setErrorPassword] = useState<string | null>(null);
+  const [errorConfirmacion, setErrorConfirmacion] = useState<string | null>(null);
+  const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
+  const [cargando, setCargando] = useState(false);
 
-    if (password !== confirmPassword) {
-      Alert.alert("Error", "Passwords do not match");
-      return;
-    }
+  const registrarse = async () => {
+    // 1. Validar en el dispositivo antes de llamar a Firebase.
+    const fallaEmail = validarEmail(email);
+    const fallaPassword = validarPassword(password);
+    const fallaConfirmacion = validarConfirmacion(password, confirmacion);
 
-    if (password.length < 6) {
-      Alert.alert("Error", "Password must be at least 6 characters");
-      return;
-    }
+    setErrorEmail(fallaEmail);
+    setErrorPassword(fallaPassword);
+    setErrorConfirmacion(fallaConfirmacion);
+    setErrorGeneral(null);
 
-    setLoading(true);
+    if (fallaEmail || fallaPassword || fallaConfirmacion) return;
+
+    // 2. Crear la cuenta.
+    setCargando(true);
     try {
-      await register(email, password);
+      await register(email.trim(), password);
       router.replace("/(tabs)");
-    } catch (error: any) {
-      let errorMessage = "Registration failed, please try again";
-      if (error.code === "auth/email-already-in-use") {
-        errorMessage = "Email already in use";
-      } else if (error.code === "auth/invalid-email") {
-        errorMessage = "Invalid email address";
-      } else if (error.code === "auth/weak-password") {
-        errorMessage = "Password is too weak";
-      }
-      Alert.alert("Registration failed", errorMessage);
+    } catch (e) {
+      setErrorGeneral(mensajeDeErrorFirebase(codigoDeError(e)));
     } finally {
-      setLoading(false);
+      setCargando(false);
     }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={s.pantalla}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.keyboardView}
+        style={s.flex}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <View style={styles.content}>
-          <Text style={styles.title}>Register</Text>
-          <Text style={styles.subtitle}>Create an account</Text>
+        <ScrollView
+          contentContainerStyle={s.contenido}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Marca */}
+          <View style={s.marca}>
+            <Image
+              source={require("@/assets/images/logos/logoapp.png")}
+              style={s.logo}
+              resizeMode="contain"
+              accessibilityLabel="PaseAR"
+            />
+            <Text style={s.nombre}>PaseAR</Text>
+            <Text style={s.lema}>Descubrí tu próximo destino!</Text>
+          </View>
 
-          <View style={styles.form}>
+          {/* Formulario */}
+          <View style={s.tarjeta}>
+            <Text style={s.titulo}>Crear cuenta</Text>
+            <Text style={s.subtitulo}>Completá tus datos para empezar</Text>
+
             <TextInput
-              style={styles.input}
+              style={[s.input, !!errorEmail && s.inputError]}
               placeholder="Email"
-              placeholderTextColor="#999"
+              placeholderTextColor="#9AAAB6"
               value={email}
-              onChangeText={setEmail}
+              onChangeText={(texto) => {
+                setEmail(texto);
+                setErrorEmail(null);
+              }}
               autoCapitalize="none"
+              autoCorrect={false}
               keyboardType="email-address"
               autoComplete="email"
             />
+            {errorEmail ? <Text style={s.textoError}>{errorEmail}</Text> : null}
 
             <TextInput
-              style={styles.input}
-              placeholder="Password"
-              placeholderTextColor="#999"
+              style={[s.input, !!errorPassword && s.inputError]}
+              placeholder="Contraseña"
+              placeholderTextColor="#9AAAB6"
               value={password}
-              onChangeText={setPassword}
-              secureTextEntry={true}
+              onChangeText={(texto) => {
+                setPassword(texto);
+                setErrorPassword(null);
+              }}
+              secureTextEntry
               autoCapitalize="none"
-              autoComplete="password"
+              autoCorrect={false}
+              autoComplete="password-new"
               textContentType="newPassword"
             />
+            {errorPassword ? (
+              <Text style={s.textoError}>{errorPassword}</Text>
+            ) : null}
 
             <TextInput
-              style={styles.input}
-              placeholder="Confirm Password"
-              placeholderTextColor="#999"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry={true}
+              style={[s.input, !!errorConfirmacion && s.inputError]}
+              placeholder="Repetir contraseña"
+              placeholderTextColor="#9AAAB6"
+              value={confirmacion}
+              onChangeText={(texto) => {
+                setConfirmacion(texto);
+                setErrorConfirmacion(null);
+              }}
+              secureTextEntry
               autoCapitalize="none"
-              autoComplete="password"
-              textContentType="password"
+              autoCorrect={false}
+              autoComplete="password-new"
+              textContentType="newPassword"
+              returnKeyType="go"
+              onSubmitEditing={registrarse}
             />
+            {errorConfirmacion ? (
+              <Text style={s.textoError}>{errorConfirmacion}</Text>
+            ) : null}
 
-            <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
-              onPress={handleRegister}
-              disabled={loading}
+            {errorGeneral ? (
+              <Text style={s.textoError}>{errorGeneral}</Text>
+            ) : null}
+
+            <Pressable
+              style={[s.boton, cargando && s.botonDeshabilitado]}
+              onPress={registrarse}
+              disabled={cargando}
+              accessibilityRole="button"
             >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
+              {cargando ? (
+                <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Text style={styles.buttonText}>Sign Up</Text>
+                <Text style={s.botonTexto}>Crear cuenta</Text>
               )}
-            </TouchableOpacity>
-
-            <View style={styles.linkContainer}>
-              <Text style={styles.linkText}>Already have an account?</Text>
-              <Link href="/login" asChild>
-                <TouchableOpacity>
-                  <Text style={styles.link}>Sign In</Text>
-                </TouchableOpacity>
-              </Link>
-            </View>
+            </Pressable>
           </View>
-        </View>
+
+          {/* Enlace a login */}
+          <Link href="/login" asChild>
+            <Pressable hitSlop={8}>
+              <Text style={s.pie}>
+                ¿Ya tenés cuenta?{" "}
+                <Text style={s.pieEnlace}>Iniciá sesión</Text>
+              </Text>
+            </Pressable>
+          </Link>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    justifyContent: "center",
-    padding: 24,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: "#111",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#666",
-    marginBottom: 32,
-  },
-  form: {
-    gap: 16,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    padding: 16,
-    fontSize: 16,
-    backgroundColor: "#fff",
-    color: "#111",
-  },
-  button: {
-    backgroundColor: "#007AFF",
-    padding: 16,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 8,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  linkContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginTop: 16,
-    gap: 4,
-  },
-  linkText: {
-    fontSize: 14,
-    color: "#666",
-  },
-  link: {
-    fontSize: 14,
-    color: "#007AFF",
-    fontWeight: "600",
-  },
-});

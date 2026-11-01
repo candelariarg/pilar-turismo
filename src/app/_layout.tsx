@@ -5,7 +5,7 @@ import {
   DefaultTheme,
   ThemeProvider,
 } from "expo-router/react-navigation";
-import { Stack } from "expo-router";
+import { router, Stack, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
 import "@/src/i18n";
@@ -20,9 +20,13 @@ export const unstable_settings = {
   anchor: "(tabs)",
 };
 
+/** Las únicas pantallas a las que se puede entrar sin sesión. */
+const PANTALLAS_PUBLICAS = ["login", "register"];
+
 function RootLayoutNav() {
   const { user, loading } = useAuth();
   const colorScheme = useColorScheme();
+  const segments = useSegments();
 
   useEffect(() => {
     if (!loading) {
@@ -30,10 +34,27 @@ function RootLayoutNav() {
     }
   }, [loading]);
 
+  /**
+   * Redirige al login cuando no hay sesión.
+   *
+   * Reacciona al estado `user` en lugar de navegar justo después de
+   * signOut(), porque `onAuthStateChanged` de Firebase se actualiza
+   * de forma asíncrona: si navegáramos antes, /login todavía estaría
+   * bloqueado por el guard de abajo y la navegación se perdería.
+   */
+  useEffect(() => {
+    if (loading) return;
+
+    const enPantallaPublica = PANTALLAS_PUBLICAS.includes(segments[0]);
+    if (!user && !enPantallaPublica) {
+      router.replace("/login");
+    }
+  }, [user, loading, segments]);
+
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size="large" color="#0068B3" />
       </View>
     );
   }

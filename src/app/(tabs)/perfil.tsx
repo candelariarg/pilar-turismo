@@ -1,20 +1,34 @@
 import React, { useState } from 'react';
 import { Text, View, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ThemedView } from '@/src/components/themed-view';
 import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
+import { ThemedView } from '@/src/components/themed-view';
 import { SwipeableScreen } from '@/src/components/swipeable-screen';
 import { AppHeader } from '@/src/components/app-header';
+import { useAuth } from '@/src/contexts/AuthContext';
+import { confirmar } from '@/src/utils/confirmar';
+import { codigoDeError, mensajeDeErrorFirebase } from '@/src/utils/validaciones';
+
 export default function PerfilScreen() {
   const { t, i18n } = useTranslation();
+  const {
+    user,
+    logout,
+    emailVerificado,
+    verificarEmail,
+    recargarUsuario,
+    cambiarPassword,
+  } = useAuth();
+
+  const [imageUrl, setImageurl] = useState<string | null>(null);
+  const [mensaje, setMensaje] = useState<string | null>(null);
+  const [enviando, setEnviando] = useState(false);
 
   const handleToggleLanguage = () => {
     const nextLang = i18n.language.startsWith('es') ? 'en' : 'es';
     i18n.changeLanguage(nextLang);
   };
-
-  const [imageUrl, setImageurl] = useState<string | null>(null);
 
   const cambiarFotoPerfil = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -34,6 +48,89 @@ export default function PerfilScreen() {
     }
   };
 
+  /** Reenvía el correo de verificación de la dirección. */
+  const enviarVerificacion = async () => {
+    setEnviando(true);
+    setMensaje(null);
+
+    try {
+      await verificarEmail();
+      setMensaje(`Te enviamos un correo a ${user?.email}. Revisá también el spam.`);
+    } catch (e) {
+      setMensaje(mensajeDeErrorFirebase(codigoDeError(e)));
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  /** Vuelve a leer el usuario para ver si ya abrió el enlace del correo. */
+  const comprobarVerificacion = async () => {
+    setMensaje(null);
+
+    try {
+      const verificado = await recargarUsuario();
+      setMensaje(
+        verificado
+          ? '¡Listo! Tu correo está verificado.'
+          : 'Todavía no verificaste tu correo. Abrí el enlace que te enviamos.',
+      );
+    } catch {
+      setMensaje('No pudimos comprobar el estado. Intentá de nuevo.');
+    }
+  };
+
+  /**
+   * Firebase envía un correo con un enlace para crear una contraseña nueva.
+   *
+   * Se usa el restablecimiento por correo y no updatePassword porque
+   * updatePassword exige un login reciente (auth/requires-recent-login).
+   */
+  const solicitarCambioPassword = async () => {
+    const email = user?.email;
+    if (!email) {
+      setMensaje('No encontramos el email de tu cuenta.');
+      return;
+    }
+
+    const acepta = await confirmar({
+      titulo: t('profile.changePassword'),
+      mensaje: `Te vamos a enviar un correo a ${email} con un enlace para crear una contraseña nueva.`,
+      textoAceptar: t('common.accept'),
+      textoCancelar: t('common.cancel'),
+    });
+    if (!acepta) return;
+
+    setEnviando(true);
+    setMensaje(null);
+
+    try {
+      await cambiarPassword(email);
+      setMensaje(`Listo. Revisá ${email} y seguí el enlace del correo.`);
+    } catch (e) {
+      setMensaje(mensajeDeErrorFirebase(codigoDeError(e)));
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  // Cierra la sesión. La vuelta al login la maneja el layout raíz
+  // en cuanto Firebase actualiza el estado `user`.
+  const cerrarSesion = async () => {
+    const acepta = await confirmar({
+      titulo: t('profile.logout'),
+      mensaje: t('profile.logoutConfirm'),
+      textoAceptar: t('profile.logout'),
+      textoCancelar: t('common.cancel'),
+    });
+    if (!acepta) return;
+
+    try {
+      await logout();
+    } catch {
+      Alert.alert(t('common.error'), 'No pudimos cerrar la sesión. Intentá de nuevo.');
+    }
+  };
+
   return (
     <ThemedView style={styles.container}>
       <SwipeableScreen currentTab="perfil">
@@ -45,8 +142,10 @@ export default function PerfilScreen() {
             source={imageUrl ? { uri: imageUrl } : require('@/assets/images/logos/usuario.png')}
             style={styles.avatarPlaceholder}
           />
-          <Text style={styles.nombreUsuario}>{t('profile.userDefaultName')}</Text>
-          
+          <Text style={styles.nombreUsuario} numberOfLines={1}>
+            {user?.email ?? t('profile.userDefaultName')}
+          </Text>
+
           {/* Botón para cambiar foto */}
           <TouchableOpacity style={styles.botonFoto} onPress={cambiarFotoPerfil}>
             <Text style={styles.textoBotonFoto}>{t('profile.changePhoto')}</Text>
@@ -55,20 +154,59 @@ export default function PerfilScreen() {
 
         {/* Opciones de Ajustes */}
         <View style={styles.seccionAjustes}>
+          {/* Estado del correo */}
+          <View style={styles.filaEstado}>
+            <Text style={styles.etiquetaEstado}>Correo electrónico</Text>
+            <Text
+              style={[
+                styles.valorEstado,
+                emailVerificado ? styles.verificado : styles.sinVerificar,
+              ]}
+            >
+              {emailVerificado ? 'Verificado' : 'Sin verificar'}
+            </Text>
+          </View>
+
+          {!emailVerificado && (
+            <TouchableOpacity
+              style={styles.botonOpcion}
+              onPress={enviarVerificacion}
+              disabled={enviando}
+            >
+              <Text style={styles.textoOpcion}>
+                {enviando ? 'Enviando correo...' : 'Verificar mi correo'}
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {!emailVerificado && (
+            <TouchableOpacity style={styles.botonOpcion} onPress={comprobarVerificacion}>
+              <Text style={styles.textoOpcion}>Ya verifiqué mi correo</Text>
+            </TouchableOpacity>
+          )}
+
           <TouchableOpacity style={styles.botonOpcion} onPress={handleToggleLanguage}>
             <Text style={styles.textoOpcion}>
               {t('profile.changeLanguage')} ({t('profile.currentLanguage')})
             </Text>
           </TouchableOpacity>
 
-          {/* Botón de cambio de contraseña */}
-          <TouchableOpacity style={styles.botonOpcion}>
-            <Text style={styles.textoOpcion}>{t('profile.changePassword')}</Text>
+          {/* Cambio de contraseña */}
+          <TouchableOpacity
+            style={styles.botonOpcion}
+            onPress={solicitarCambioPassword}
+            disabled={enviando}
+          >
+            <Text style={styles.textoOpcion}>
+              {enviando ? 'Enviando correo...' : t('profile.changePassword')}
+            </Text>
           </TouchableOpacity>
+
+          {mensaje ? <Text style={styles.mensajeInfo}>{mensaje}</Text> : null}
         </View>
 
         {/* Botón de Cerrar Sesión */}
-        <TouchableOpacity style={styles.botonSalir}>
+        <TouchableOpacity style={styles.botonSalir} onPress={cerrarSesion}>
           <Text style={styles.textoSalir}>{t('profile.logout')}</Text>
         </TouchableOpacity>
 
@@ -124,6 +262,28 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
   },
+  filaEstado: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEEEEE',
+  },
+  etiquetaEstado: {
+    fontSize: 16,
+    color: '#333333',
+  },
+  valorEstado: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  verificado: {
+    color: '#2E7D32',
+  },
+  sinVerificar: {
+    color: '#C62828',
+  },
   botonOpcion: {
     paddingVertical: 15,
     borderBottomWidth: 1,
@@ -132,6 +292,12 @@ const styles = StyleSheet.create({
   textoOpcion: {
     fontSize: 16,
     color: '#333333',
+  },
+  mensajeInfo: {
+    marginTop: 12,
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#0068B3',
   },
   botonSalir: {
     padding: 15,
