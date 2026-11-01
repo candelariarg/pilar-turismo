@@ -6,14 +6,14 @@
     "profile": "Profile"
   },
   "header": {
-    "subtitle": "Discover the city"
+    "subtitle": "Discover your next destination!"
   },
   "home": {
     "welcomeTitle": "Welcome to Pilar!",
     "welcomeSubtitle": "Discover the history, gastronomy, and nature of our city",
     "searchPlaceholder": "Search places, restaurants, events...",
     "historicPlaces": "Local historic places",
-    "popularPlaces": "Popular places",
+    "popularPlaces": "Local popular places",
     "featuredSection": "Featured Places",
     "categoriesSection": "Main Categories",
     "upcomingEvents": "Upcoming Events",
@@ -22,10 +22,15 @@
   "map": {
     "title": "Explore Pilar",
     "searchPlaceholder": "Search in Pilar... (e.g. pharmacy, museum)",
+    "searchPlaceholderPasear": "Search in PaseAR or Pilar...",
     "location": "Location",
     "searchingGps": "Searching GPS satellites...",
+    "gpsPermissionHelp": "Go to Settings → Apps → Expo Go → Permissions → Location → Allow.",
+    "enRouteTo": "En route to {{name}}",
     "distance": "Distance",
     "estimatedTime": "Est. time",
+    "estimatedMin": "est. min",
+    "min": "min",
     "calculatingRoute": "Calculating route...",
     "startNavigation": "Start Navigation",
     "endNavigation": "End Navigation",
@@ -108,12 +113,30 @@
     "notifications": "Event Notifications",
     "darkMode": "Dark Mode",
     "logout": "Log Out",
-    "logoutConfirm": "Are you sure you want to log out?"
+    "logoutConfirm": "Are you sure you want to log out?",
+    "emailLabel": "Email address",
+    "verified": "Verified",
+    "unverified": "Unverified",
+    "verifyEmail": "Verify my email",
+    "alreadyVerified": "I already verified my email",
+    "sendingEmail": "Sending email...",
+    "verificationSent": "We sent an email to {{email}}. Please check spam too.",
+    "emailVerifiedSuccess": "Done! Your email is verified.",
+    "emailNotYetVerified": "You haven't verified your email yet. Please open the link we sent you.",
+    "checkError": "Could not check status. Please try again.",
+    "noEmailFound": "We could not find your account email.",
+    "passwordResetMessage": "We will send an email to {{email}} with a link to create a new password.",
+    "passwordResetSent": "Done. Check {{email}} and follow the link in the email.",
+    "logoutError": "Could not log out. Please try again."
   },
   "chat": {
     "title": "Pilar Virtual Guide",
+    "headerTitle": "Virtual Guide",
     "placeholder": "Type your query...",
-    "initialMessage": "Hello! How can I help you today regarding Pilar?",
+    "initialMessage": "Hello! How can I guide you today about Pilar?",
+    "loginToAsk": "Log in to ask",
+    "limitReached": "You reached this session's limit",
+    "errorMessage": "There was a problem with the virtual guide.",
     "noApiKey": "Missing EXPO_PUBLIC_DEEPSEEK_API_KEY in your .env file",
     "noReply": "Could not get a response.",
     "errorConnection": "Connection error with AI.",
@@ -127,6 +150,7 @@
     "confirm": "Confirm",
     "accept": "Accept",
     "back": "Back",
+    "close": "Close",
     "search": "Search",
     "galleryPermission": "Gallery permission is required."
   }

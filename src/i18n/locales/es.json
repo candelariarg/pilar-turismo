@@ -6,14 +6,14 @@
     "profile": "Perfil"
   },
   "header": {
-    "subtitle": "Descubrí la ciudad"
+    "subtitle": "¡Descubrí tu próximo destino!"
   },
   "home": {
     "welcomeTitle": "¡Bienvenido a Pilar!",
     "welcomeSubtitle": "Descubre la historia, gastronomía y naturaleza de nuestra ciudad",
     "searchPlaceholder": "Buscar lugares, restaurantes, eventos...",
     "historicPlaces": "Lugares históricos locales",
-    "popularPlaces": "Lugares populares",
+    "popularPlaces": "Lugares populares locales",
     "featuredSection": "Lugares Destacados",
     "categoriesSection": "Categorías Principales",
     "upcomingEvents": "Próximos Eventos",
@@ -22,10 +22,15 @@
   "map": {
     "title": "Explorar Pilar",
     "searchPlaceholder": "Buscar en Pilar... (ej: farmacia, museo)",
+    "searchPlaceholderPasear": "Buscar en PaseAR o Pilar...",
     "location": "Ubicación",
     "searchingGps": "Buscando satélites GPS...",
+    "gpsPermissionHelp": "Ve a Configuración → Aplicaciones → Expo Go → Permisos → Ubicación → Permitir.",
+    "enRouteTo": "En ruta a {{name}}",
     "distance": "Distancia",
     "estimatedTime": "Tiempo est.",
+    "estimatedMin": "min estimados",
+    "min": "min",
     "calculatingRoute": "Calculando ruta...",
     "startNavigation": "Iniciar Navegación",
     "endNavigation": "Finalizar Navegación",
@@ -108,12 +113,30 @@
     "notifications": "Notificaciones de Eventos",
     "darkMode": "Modo Oscuro",
     "logout": "Cerrar Sesión",
-    "logoutConfirm": "¿Estás seguro de que deseas cerrar sesión?"
+    "logoutConfirm": "¿Estás seguro de que deseas cerrar sesión?",
+    "emailLabel": "Correo electrónico",
+    "verified": "Verificado",
+    "unverified": "Sin verificar",
+    "verifyEmail": "Verificar mi correo",
+    "alreadyVerified": "Ya verifiqué mi correo",
+    "sendingEmail": "Enviando correo...",
+    "verificationSent": "Te enviamos un correo a {{email}}. Revisá también el spam.",
+    "emailVerifiedSuccess": "¡Listo! Tu correo está verificado.",
+    "emailNotYetVerified": "Todavía no verificaste tu correo. Abrí el enlace que te enviamos.",
+    "checkError": "No pudimos comprobar el estado. Intentá de nuevo.",
+    "noEmailFound": "No encontramos el email de tu cuenta.",
+    "passwordResetMessage": "Te vamos a enviar un correo a {{email}} con un enlace para crear una contraseña nueva.",
+    "passwordResetSent": "Listo. Revisá {{email}} y seguí el enlace del correo.",
+    "logoutError": "No pudimos cerrar la sesión. Intentá de nuevo."
   },
   "chat": {
     "title": "Guía Virtual de Pilar",
+    "headerTitle": "Guía Virtual",
     "placeholder": "Escribe tu consulta...",
-    "initialMessage": "¡Hola! ¿En qué puedo ayudarte hoy sobre Pilar?",
+    "initialMessage": "¡Hola! ¿En qué puedo guiarte hoy sobre Pilar?",
+    "loginToAsk": "Iniciá sesión para consultar",
+    "limitReached": "Llegaste al límite de esta sesión",
+    "errorMessage": "Hubo un problema con la guía virtual.",
     "noApiKey": "Falta configurar EXPO_PUBLIC_DEEPSEEK_API_KEY en tu archivo .env",
     "noReply": "No pude obtener una respuesta.",
     "errorConnection": "Hubo un error de conexión con la IA.",
@@ -127,6 +150,7 @@
     "confirm": "Confirmar",
     "accept": "Aceptar",
     "back": "Volver",
+    "close": "Cerrar",
     "search": "Buscar",
     "galleryPermission": "Se requiere acceso a la galería."
   }

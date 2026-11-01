@@ -178,7 +178,7 @@ export default function ExploreScreen() {
                 <Ionicons name="warning-outline" size={48} color="#E53935" />
                 <Text style={{ color: '#E53935', textAlign: 'center', marginTop: 10, fontWeight: 'bold' }}>{errorMsg}</Text>
                 <Text style={{ textAlign: 'center', paddingHorizontal: 20, marginTop: 8, color: '#666' }}>
-                  Ve a Configuración → Aplicaciones → Expo Go → Permisos → Ubicación → Permitir.
+                  {t('map.gpsPermissionHelp')}
                 </Text>
               </View>
             ) : userLocation ? (
@@ -207,10 +207,10 @@ export default function ExploreScreen() {
                 </View>
                 <View style={{ flex: 1, marginLeft: 12 }}>
                   <Text style={styles.navTopTitle} numberOfLines={1}>
-                    En ruta a {selectedPlace.name}
+                    {t('map.enRouteTo', { name: selectedPlace.name })}
                   </Text>
                   <Text style={styles.navTopSubtitle} numberOfLines={1}>
-                    {routeData ? `${routeData.distanceKm} km • ${routeData.durationMin} min estimados` : selectedPlace.address}
+                    {routeData ? `${routeData.distanceKm} km • ${routeData.durationMin} ${t('map.estimatedMin')}` : selectedPlace.address}
                   </Text>
                 </View>
                 <TouchableOpacity
@@ -239,7 +239,7 @@ export default function ExploreScreen() {
 
                   <TextInput
                     style={styles.searchInput}
-                    placeholder="Buscar en PaseAR o Pilar..."
+                    placeholder={t('map.searchPlaceholderPasear')}
                     placeholderTextColor="#70757A"
                     value={textoBusqueda}
                     onChangeText={setTextoBusqueda}
@@ -440,7 +440,7 @@ export default function ExploreScreen() {
                     {t('map.transport.car')}
                   </Text>
                   {routeData && transportMode === 'driving' && (
-                    <Text style={styles.transportBtnTime}>{routeData.durationMin} min</Text>
+                    <Text style={styles.transportBtnTime}>{routeData.durationMin} {t('map.min')}</Text>
                   )}
                 </TouchableOpacity>
 
@@ -453,7 +453,7 @@ export default function ExploreScreen() {
                     {t('map.transport.walk')}
                   </Text>
                   {routeData && transportMode === 'foot' && (
-                    <Text style={styles.transportBtnTime}>{routeData.durationMin} min</Text>
+                    <Text style={styles.transportBtnTime}>{routeData.durationMin} {t('map.min')}</Text>
                   )}
                 </TouchableOpacity>
 
@@ -466,7 +466,7 @@ export default function ExploreScreen() {
                     {t('map.transport.bike')}
                   </Text>
                   {routeData && transportMode === 'bike' && (
-                    <Text style={styles.transportBtnTime}>{routeData.durationMin} min</Text>
+                    <Text style={styles.transportBtnTime}>{routeData.durationMin} {t('map.min')}</Text>
                   )}
                 </TouchableOpacity>
               </View>
