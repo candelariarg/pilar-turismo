@@ -12,6 +12,8 @@ interface LeafletMapProps {
   centerOnUser?: number; // incrementar este valor dispara el re-centro hacia el GPS
 }
 
+const CARTO_API_KEY = process.env.EXPO_PUBLIC_CARTO_API_KEY || 'cb1_4ztx_1_6832a6a8b6de5c495632c45f';
+
 // Genera la página HTML base con Leaflet y los scripts de renderizado dinámico
 const generateBaseMapHTML = (userLocation: LocationCoords): string => {
   return `
@@ -108,10 +110,11 @@ const generateBaseMapHTML = (userLocation: LocationCoords): string => {
         }).setView([${userLocation.latitude}, ${userLocation.longitude}], 14);
         window.map = map;
 
-        // Capa de mapas moderna ESRI World Street Map (100% libre, sin API key, sin registro y estética limpia)
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-          attribution: 'Tiles © Esri',
-          maxZoom: 19
+        // Capa de mapas moderna CartoDB Voyager con API Key oficial (5.000.000 peticiones/mes)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=' + '${CARTO_API_KEY}', {
+          attribution: '© OpenStreetMap contributors © CARTO',
+          subdomains: 'abcd',
+          maxZoom: 20
         }).addTo(map);
 
         // Marcador del usuario (punto azul Google)
