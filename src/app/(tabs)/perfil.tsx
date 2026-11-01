@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { Text, View, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
+import {
+  Text,
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  Alert,
+  ScrollView,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
@@ -135,82 +143,86 @@ export default function PerfilScreen() {
     <ThemedView style={styles.container}>
       <SwipeableScreen currentTab="perfil">
         <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <AppHeader />
-        {/* Encabezado Azul */}
-        <View style={styles.header}>
-          <Image
-            source={imageUrl ? { uri: imageUrl } : require('@/assets/images/logos/usuario.png')}
-            style={styles.avatarPlaceholder}
-          />
-          <Text style={styles.nombreUsuario} numberOfLines={1}>
-            {user?.email ?? t('profile.userDefaultName')}
-          </Text>
-
-          {/* Botón para cambiar foto */}
-          <TouchableOpacity style={styles.botonFoto} onPress={cambiarFotoPerfil}>
-            <Text style={styles.textoBotonFoto}>{t('profile.changePhoto')}</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Opciones de Ajustes */}
-        <View style={styles.seccionAjustes}>
-          {/* Estado del correo */}
-          <View style={styles.filaEstado}>
-            <Text style={styles.etiquetaEstado}>{t('profile.emailLabel')}</Text>
-            <Text
-              style={[
-                styles.valorEstado,
-                emailVerificado ? styles.verificado : styles.sinVerificar,
-              ]}
-            >
-              {emailVerificado ? t('profile.verified') : t('profile.unverified')}
-            </Text>
-          </View>
-
-          {!emailVerificado && (
-            <TouchableOpacity
-              style={styles.botonOpcion}
-              onPress={enviarVerificacion}
-              disabled={enviando}
-            >
-              <Text style={styles.textoOpcion}>
-                {enviando ? t('profile.sendingEmail') : t('profile.verifyEmail')}
-              </Text>
-            </TouchableOpacity>
-          )}
-
-          {!emailVerificado && (
-            <TouchableOpacity style={styles.botonOpcion} onPress={comprobarVerificacion}>
-              <Text style={styles.textoOpcion}>{t('profile.alreadyVerified')}</Text>
-            </TouchableOpacity>
-          )}
-
-          <TouchableOpacity style={styles.botonOpcion} onPress={handleToggleLanguage}>
-            <Text style={styles.textoOpcion}>
-              {t('profile.changeLanguage')} ({t('profile.currentLanguage')})
-            </Text>
-          </TouchableOpacity>
-
-          {/* Cambio de contraseña */}
-          <TouchableOpacity
-            style={styles.botonOpcion}
-            onPress={solicitarCambioPassword}
-            disabled={enviando}
+          <AppHeader />
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
           >
-            <Text style={styles.textoOpcion}>
-              {enviando ? t('profile.sendingEmail') : t('profile.changePassword')}
-            </Text>
-          </TouchableOpacity>
+            {/* Encabezado Azul */}
+            <View style={styles.header}>
+              <Image
+                source={imageUrl ? { uri: imageUrl } : require('@/assets/images/logos/usuario.png')}
+                style={styles.avatarPlaceholder}
+              />
+              <Text style={styles.nombreUsuario} numberOfLines={1}>
+                {user?.email ?? t('profile.userDefaultName')}
+              </Text>
 
-          {mensaje ? <Text style={styles.mensajeInfo}>{mensaje}</Text> : null}
-        </View>
+              {/* Botón para cambiar foto */}
+              <TouchableOpacity style={styles.botonFoto} onPress={cambiarFotoPerfil}>
+                <Text style={styles.textoBotonFoto}>{t('profile.changePhoto')}</Text>
+              </TouchableOpacity>
+            </View>
 
-        {/* Botón de Cerrar Sesión */}
-        <TouchableOpacity style={styles.botonSalir} onPress={cerrarSesion}>
-          <Text style={styles.textoSalir}>{t('profile.logout')}</Text>
-        </TouchableOpacity>
+            {/* Opciones de Ajustes */}
+            <View style={styles.seccionAjustes}>
+              {/* Estado del correo */}
+              <View style={styles.filaEstado}>
+                <Text style={styles.etiquetaEstado}>{t('profile.emailLabel')}</Text>
+                <Text
+                  style={[
+                    styles.valorEstado,
+                    emailVerificado ? styles.verificado : styles.sinVerificar,
+                  ]}
+                >
+                  {emailVerificado ? t('profile.verified') : t('profile.unverified')}
+                </Text>
+              </View>
 
-      </SafeAreaView>
+              {!emailVerificado && (
+                <TouchableOpacity
+                  style={styles.botonOpcion}
+                  onPress={enviarVerificacion}
+                  disabled={enviando}
+                >
+                  <Text style={styles.textoOpcion}>
+                    {enviando ? t('profile.sendingEmail') : t('profile.verifyEmail')}
+                  </Text>
+                </TouchableOpacity>
+              )}
+
+              {!emailVerificado && (
+                <TouchableOpacity style={styles.botonOpcion} onPress={comprobarVerificacion}>
+                  <Text style={styles.textoOpcion}>{t('profile.alreadyVerified')}</Text>
+                </TouchableOpacity>
+              )}
+
+              <TouchableOpacity style={styles.botonOpcion} onPress={handleToggleLanguage}>
+                <Text style={styles.textoOpcion}>
+                  {t('profile.changeLanguage')} ({t('profile.currentLanguage')})
+                </Text>
+              </TouchableOpacity>
+
+              {/* Cambio de contraseña */}
+              <TouchableOpacity
+                style={styles.botonOpcion}
+                onPress={solicitarCambioPassword}
+                disabled={enviando}
+              >
+                <Text style={styles.textoOpcion}>
+                  {enviando ? t('profile.sendingEmail') : t('profile.changePassword')}
+                </Text>
+              </TouchableOpacity>
+
+              {mensaje ? <Text style={styles.mensajeInfo}>{mensaje}</Text> : null}
+            </View>
+
+            {/* Botón de Cerrar Sesión con separación clara */}
+            <TouchableOpacity style={styles.botonSalir} onPress={cerrarSesion}>
+              <Text style={styles.textoSalir}>{t('profile.logout')}</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </SafeAreaView>
       </SwipeableScreen>
     </ThemedView>
   );
@@ -224,25 +236,28 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
+  scrollContent: {
+    paddingBottom: 40,
+  },
   header: {
     alignItems: 'center',
     backgroundColor: '#2196F3',
-    paddingVertical: 40,
+    paddingVertical: 28,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
-    marginBottom: 30,
+    marginBottom: 20,
   },
   avatarPlaceholder: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 90,
+    height: 90,
+    borderRadius: 45,
     backgroundColor: '#FFFFFF',
     borderWidth: 2,
     borderColor: '#E0E0E0',
-    marginBottom: 15,
+    marginBottom: 12,
   },
   nombreUsuario: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 10,
@@ -259,7 +274,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   seccionAjustes: {
-    flex: 1,
     paddingHorizontal: 20,
   },
   filaEstado: {
@@ -302,15 +316,16 @@ const styles = StyleSheet.create({
   botonSalir: {
     padding: 15,
     alignItems: 'center',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#fa1818',
-    borderRadius: 8,
+    borderRadius: 12,
     marginHorizontal: 20,
-    marginBottom: 30,
+    marginTop: 32,
+    marginBottom: 20,
   },
   textoSalir: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#EF4444',
-  }
+  },
 });
