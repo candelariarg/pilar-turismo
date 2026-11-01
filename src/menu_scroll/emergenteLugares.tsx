@@ -18,6 +18,10 @@ export interface Lugar {
   Descripcion?: string;
   imagen_ruta?: string | null;
   imagen_uri?: string | null;
+  latitude?: number;
+  longitude?: number;
+  latitud?: number;
+  longitud?: number;
 }
 
 interface EmergenteLugaresProps {

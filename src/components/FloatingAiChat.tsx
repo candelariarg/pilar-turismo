@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,12 +6,13 @@ import {
   TouchableOpacity,
   Modal,
   FlatList,
-  SafeAreaView,
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/src/contexts/AuthContext';
 import {
   consultarGuia,
@@ -23,13 +24,24 @@ import {
 
 export const FloatingAiChat: React.FC = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   const [visible, setVisible] = useState(false);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<MensajeChat[]>([
-    { role: 'assistant', text: 'Hola! En qué puedo guiarte?' },
+    { role: 'assistant', text: t('chat.initialMessage') },
   ]);
+
+  // Actualiza el saludo inicial si cambia el idioma
+  useEffect(() => {
+    setMessages((prev) => {
+      if (prev.length === 1 && prev[0].role === 'assistant') {
+        return [{ role: 'assistant', text: t('chat.initialMessage') }];
+      }
+      return prev;
+    });
+  }, [t]);
 
   // La guía sólo responde a usuarios con sesión y con cupo disponible.
   const consultasUsadas = messages.filter((m) => m.role === 'user').length;
@@ -51,7 +63,7 @@ export const FloatingAiChat: React.FC = () => {
       const mensaje =
         e instanceof ErrorChat
           ? e.message
-          : 'Hubo un problema con la guía virtual.';
+          : t('chat.errorMessage');
       setMessages((prev) => [...prev, { role: 'assistant', text: mensaje }]);
     } finally {
       setLoading(false);
@@ -59,10 +71,10 @@ export const FloatingAiChat: React.FC = () => {
   };
 
   const placeholder = !user
-    ? 'Iniciá sesión para consultar'
+    ? t('chat.loginToAsk')
     : sinCupo
-      ? 'Llegaste al límite de esta sesión'
-      : 'Escribe tu consulta...';
+      ? t('chat.limitReached')
+      : t('chat.placeholder');
 
   return (
     <>
@@ -80,7 +92,7 @@ export const FloatingAiChat: React.FC = () => {
           >
             {/* Cabecera */}
             <View style={styles.header}>
-              <Text style={styles.headerTitle}>Guía Virtual</Text>
+              <Text style={styles.headerTitle}>{t('chat.headerTitle')}</Text>
               <TouchableOpacity onPress={() => setVisible(false)}>
                 <Text style={styles.closeBtn}>✕</Text>
               </TouchableOpacity>

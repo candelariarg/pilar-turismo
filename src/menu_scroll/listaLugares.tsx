@@ -19,7 +19,7 @@ import { imagenesLugares } from './configImagenes';
 import EmergenteLugares, { Lugar } from './emergenteLugares';
 
 //ruta de la pantalla del mapa (cambiala por la que uses en tu app)
-const RUTA_MAPA = '/mapa';
+const RUTA_MAPA = '/(tabs)/mapa';
 
 //obtenemos el ancho de la pantalla para darle un tamaño proporcional a las tarjetas
 const { width } = Dimensions.get('window');
@@ -126,11 +126,14 @@ const LugaresIniciales = () => {
 
   const irAlMapa = (lugar: Lugar) => {
     setLugarSeleccionado(null); //cerramos la ventana antes de navegar
-    router.push({
+    const lat = lugar.latitude ?? lugar.latitud;
+    const lon = lugar.longitude ?? lugar.longitud;
+    router.navigate({
       pathname: RUTA_MAPA,
       params: {
         nombre: lugar.Nombre,
         direccion: lugar.Direccion,
+        ...(lat != null && lon != null ? { lat: String(lat), lon: String(lon) } : {}),
       },
     });
   };

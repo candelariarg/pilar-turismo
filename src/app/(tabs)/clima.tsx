@@ -1,10 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import {Text,ActivityIndicator,StyleSheet,View,ScrollView,TouchableOpacity,Modal,} from 'react-native';
+import {
+  Text,
+  ActivityIndicator,
+  StyleSheet,
+  View,
+  ScrollView,
+  TouchableOpacity,
+  Modal,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { AppHeader } from '@/src/components/app-header';
 import { Ionicons } from '@expo/vector-icons';
 
-
+// INTERFACES DE TYPESCRIPT
+// Definen la estructura exacta de los datos para evitar errores de tipo
 interface PronosticoHora {
   hora: string;
   temp: number;
@@ -12,9 +22,11 @@ interface PronosticoHora {
 
 interface PronosticoDia {
   dia: string;
+  diaKey: string;
   max: number;
   min: number;
   probLluvia: number;
+  codigoClima: number;
   estadoTexto: string;
 }
 
@@ -40,7 +52,12 @@ interface ClimaData {
   recomendacion: RecomendacionDia;
 }
 
+const diasSemanaKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
+
 export default function ClimaScreen() {
+  const { t } = useTranslation();
+
+  // Estado principal del clima y del indicador de carga (spinner)
   const [clima, setClima] = useState<ClimaData | null>(null);
   const [cargando, setCargando] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
@@ -51,6 +68,17 @@ export default function ClimaScreen() {
   useEffect(() => {
     obtenerClimaCompleto();
   }, []);
+
+  // Función helper para traducir los códigos WMO de la API
+  const obtenerTextoEstado = (codigo: number, probLluvia: number): string => {
+    if (codigo >= 51 && codigo <= 99) return `${t('weather.conditions.rain')} ${probLluvia}%`;
+    if (probLluvia > 60) return `${t('weather.conditions.rain')} ${probLluvia}%`;
+    if (codigo === 0) return t('weather.conditions.sunny');
+    if (codigo === 1 || codigo === 2) return t('weather.conditions.partlyCloudy');
+    if (codigo === 3) return t('weather.conditions.cloudy');
+    if (codigo >= 45 && codigo <= 48) return t('weather.conditions.fog');
+    return t('weather.conditions.sunny');
+  };
 
   // Recomendaciones atractivas orientadas al turismo con los lugares de Pilar
   const generarRecomendaciones = (
@@ -129,6 +157,7 @@ export default function ClimaScreen() {
     };
   };
 
+  // Función principal para consultar la API de Open-Meteo
   const obtenerClimaCompleto = async () => {
     try {
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitud}&longitude=${longitud}&current=temperature_2m,apparent_temperature,wind_speed_10m&hourly=temperature_2m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=auto`;
@@ -149,16 +178,7 @@ export default function ClimaScreen() {
           }
         }
 
-        const obtenerTextoEstado = (codigo: number, probLluvia: number): string => {
-          if (codigo >= 51 && codigo <= 99) return `Lluvia ${probLluvia}%`;
-          if (probLluvia > 60) return `Lluvia ${probLluvia}%`;
-          if (codigo === 0) return 'Soleado';
-          if (codigo === 1 || codigo === 2) return 'Parcialmente nublado';
-          if (codigo === 3) return 'Nublado';
-          if (codigo >= 45 && codigo <= 48) return 'Niebla';
-          return 'Soleado';
-        };
-
+        // Mapear y formatear los días de la semana
         const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
         const proximosDias: PronosticoDia[] = datos.daily.time.map(
           (fechaStr: string, idx: number) => {
@@ -166,12 +186,15 @@ export default function ClimaScreen() {
             const d = new Date(year, month - 1, day);
             const prob = datos.daily.precipitation_probability_max[idx] || 0;
             const codigo = datos.daily.weather_code[idx] || 0;
+            const diaKey = idx === 0 ? 'today' : diasSemanaKeys[d.getDay()];
 
             return {
               dia: idx === 0 ? 'Hoy' : diasSemana[d.getDay()],
+              diaKey,
               max: Math.round(datos.daily.temperature_2m_max[idx]),
               min: Math.round(datos.daily.temperature_2m_min[idx]),
               probLluvia: prob,
+              codigoClima: codigo,
               estadoTexto: obtenerTextoEstado(codigo, prob),
             };
           }
@@ -237,14 +260,14 @@ export default function ClimaScreen() {
 
               {clima && (
                 <Text style={styles.rangos}>
-                  Máx. {clima.tempMax}°  •  Mín. {clima.tempMin}°  •  Sensación: {clima.sensacion}°
+                  {t('weather.max')} {clima.tempMax}°  •  {t('weather.min')} {clima.tempMin}°  •  {t('weather.feelsLikeText')}: {clima.sensacion}°
                 </Text>
               )}
             </View>
 
             {/* Pronóstico por hora */}
             <View style={styles.cardSection}>
-              <Text style={styles.sectionTitle}>PRONÓSTICO POR HORA</Text>
+              <Text style={styles.sectionTitle}>{t('weather.hourlyForecast')}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 <View style={styles.horasRow}>
                   {clima?.horas.map((item, index) => (
@@ -259,10 +282,12 @@ export default function ClimaScreen() {
 
             {/* Pronóstico de 7 Días */}
             <View style={styles.cardSection}>
-              <Text style={styles.sectionTitle}>PRONÓSTICO DE 7 DÍAS</Text>
+              <Text style={styles.sectionTitle}>{t('weather.dailyForecast')}</Text>
               {clima?.dias.map((item, index) => (
                 <View key={index} style={styles.diaRow}>
-                  <Text style={styles.diaNombre}>{item.dia}</Text>
+                  <Text style={styles.diaNombre}>
+                    {item.diaKey === 'today' ? t('weather.today') : t(`weather.days.${item.diaKey}`, item.dia)}
+                  </Text>
 
                   <Text
                     style={
@@ -271,7 +296,7 @@ export default function ClimaScreen() {
                         : styles.textoNormal
                     }
                   >
-                    {item.estadoTexto}
+                    {obtenerTextoEstado(item.codigoClima, item.probLluvia)}
                   </Text>
 
                   <View style={styles.diaRangoContainer}>
@@ -284,14 +309,14 @@ export default function ClimaScreen() {
 
             {/* Información adicional */}
             <View style={styles.cardSection}>
-              <Text style={styles.sectionTitle}>INFORMACIÓN ADICIONAL</Text>
+              <Text style={styles.sectionTitle}>{t('weather.additionalInfo')}</Text>
               <View style={styles.detallesGrid}>
                 <View style={styles.detalleCard}>
-                  <Text style={styles.detalleLabel}>VIENTO</Text>
+                  <Text style={styles.detalleLabel}>{t('weather.windLabel')}</Text>
                   <Text style={styles.detalleVal}>{clima?.viento} km/h</Text>
                 </View>
                 <View style={styles.detalleCard}>
-                  <Text style={styles.detalleLabel}>SENSACIÓN TÉRMICA</Text>
+                  <Text style={styles.detalleLabel}>{t('weather.feelsLikeLabel')}</Text>
                   <Text style={styles.detalleVal}>{clima?.sensacion}°C</Text>
                 </View>
               </View>
