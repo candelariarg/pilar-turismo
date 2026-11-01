@@ -108,10 +108,9 @@ const generateBaseMapHTML = (userLocation: LocationCoords): string => {
         }).setView([${userLocation.latitude}, ${userLocation.longitude}], 14);
         window.map = map;
 
-        // Capa de mapas moderna CartoDB Voyager (sin API key y estilo Google Maps)
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-          attribution: '© OpenStreetMap © CARTO',
-          subdomains: 'abcd',
+        // Capa de mapas moderna ESRI World Street Map (100% libre, sin API key, sin registro y estética limpia)
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+          attribution: 'Tiles © Esri',
           maxZoom: 19
         }).addTo(map);
 
