@@ -1,6 +1,9 @@
 import { Image, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 export function AppHeader() {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.barra}>
       <Image
@@ -12,7 +15,7 @@ export function AppHeader() {
       />
       <View>
         <Text style={styles.titulo}>PaseAR</Text>
-        <Text style={styles.subtitulo}>Descubrí tu próximo destino!</Text>
+        <Text style={styles.subtitulo}>{t('header.subtitle')}</Text>
       </View>
     </View>
   );

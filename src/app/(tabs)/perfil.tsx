@@ -33,7 +33,7 @@ export default function PerfilScreen() {
   const cambiarFotoPerfil = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
-      Alert.alert(t('common.error'), 'Se requiere acceso a la galería.');
+      Alert.alert(t('common.error'), t('common.galleryPermission'));
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -55,7 +55,7 @@ export default function PerfilScreen() {
 
     try {
       await verificarEmail();
-      setMensaje(`Te enviamos un correo a ${user?.email}. Revisá también el spam.`);
+      setMensaje(t('profile.verificationSent', { email: user?.email }));
     } catch (e) {
       setMensaje(mensajeDeErrorFirebase(codigoDeError(e)));
     } finally {
@@ -71,11 +71,11 @@ export default function PerfilScreen() {
       const verificado = await recargarUsuario();
       setMensaje(
         verificado
-          ? '¡Listo! Tu correo está verificado.'
-          : 'Todavía no verificaste tu correo. Abrí el enlace que te enviamos.',
+          ? t('profile.emailVerifiedSuccess')
+          : t('profile.emailNotYetVerified'),
       );
     } catch {
-      setMensaje('No pudimos comprobar el estado. Intentá de nuevo.');
+      setMensaje(t('profile.checkError'));
     }
   };
 
@@ -88,13 +88,13 @@ export default function PerfilScreen() {
   const solicitarCambioPassword = async () => {
     const email = user?.email;
     if (!email) {
-      setMensaje('No encontramos el email de tu cuenta.');
+      setMensaje(t('profile.noEmailFound'));
       return;
     }
 
     const acepta = await confirmar({
       titulo: t('profile.changePassword'),
-      mensaje: `Te vamos a enviar un correo a ${email} con un enlace para crear una contraseña nueva.`,
+      mensaje: t('profile.passwordResetMessage', { email }),
       textoAceptar: t('common.accept'),
       textoCancelar: t('common.cancel'),
     });
@@ -105,7 +105,7 @@ export default function PerfilScreen() {
 
     try {
       await cambiarPassword(email);
-      setMensaje(`Listo. Revisá ${email} y seguí el enlace del correo.`);
+      setMensaje(t('profile.passwordResetSent', { email }));
     } catch (e) {
       setMensaje(mensajeDeErrorFirebase(codigoDeError(e)));
     } finally {
@@ -127,7 +127,7 @@ export default function PerfilScreen() {
     try {
       await logout();
     } catch {
-      Alert.alert(t('common.error'), 'No pudimos cerrar la sesión. Intentá de nuevo.');
+      Alert.alert(t('common.error'), t('profile.logoutError'));
     }
   };
 
@@ -156,14 +156,14 @@ export default function PerfilScreen() {
         <View style={styles.seccionAjustes}>
           {/* Estado del correo */}
           <View style={styles.filaEstado}>
-            <Text style={styles.etiquetaEstado}>Correo electrónico</Text>
+            <Text style={styles.etiquetaEstado}>{t('profile.emailLabel')}</Text>
             <Text
               style={[
                 styles.valorEstado,
                 emailVerificado ? styles.verificado : styles.sinVerificar,
               ]}
             >
-              {emailVerificado ? 'Verificado' : 'Sin verificar'}
+              {emailVerificado ? t('profile.verified') : t('profile.unverified')}
             </Text>
           </View>
 
@@ -174,14 +174,14 @@ export default function PerfilScreen() {
               disabled={enviando}
             >
               <Text style={styles.textoOpcion}>
-                {enviando ? 'Enviando correo...' : 'Verificar mi correo'}
+                {enviando ? t('profile.sendingEmail') : t('profile.verifyEmail')}
               </Text>
             </TouchableOpacity>
           )}
 
           {!emailVerificado && (
             <TouchableOpacity style={styles.botonOpcion} onPress={comprobarVerificacion}>
-              <Text style={styles.textoOpcion}>Ya verifiqué mi correo</Text>
+              <Text style={styles.textoOpcion}>{t('profile.alreadyVerified')}</Text>
             </TouchableOpacity>
           )}
 
@@ -198,7 +198,7 @@ export default function PerfilScreen() {
             disabled={enviando}
           >
             <Text style={styles.textoOpcion}>
-              {enviando ? 'Enviando correo...' : t('profile.changePassword')}
+              {enviando ? t('profile.sendingEmail') : t('profile.changePassword')}
             </Text>
           </TouchableOpacity>
 

@@ -1,311 +1,523 @@
-import React, { useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
+import { useLocalSearchParams } from 'expo-router';
 import {
   StyleSheet,
   View,
   Text,
+  TextInput,
   TouchableOpacity,
   ScrollView,
-  Dimensions,
+  ActivityIndicator,
+  Animated,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { ThemedView } from '@/src/components/themed-view';
+
+// Componentes del mapa y navegación
+import LeafletMap from '@/src/components/leaflet-map';
 import { SwipeableScreen } from '@/src/components/swipeable-screen';
-import { AppHeader } from '../../components/app-header';
 
-const { width } = Dimensions.get('window');
-
-// lugares de muestra 
-interface Lugar {
-  id: string;
-  nombre: string;
-  categoria: 'hospital' | 'comisaria' | 'supermercado' | 'sum' | 'turismo';
-  categoriaText: string;
-  icono: string;
-  color: string;
-  direccion: string;
-  distancia: string;
-  tiempo: string;
-  coordenadasSimuladas: { top: number; left: number };
-}
-
-// datos de prueba para el jueves 
-const LUGARES_PILAR: Lugar[] = [
-  {
-    id: '1',
-    nombre: 'Hospital Central de Pilar',
-    categoria: 'hospital',
-    categoriaText: 'Hospital / Salud',
-    icono: 'hospital-building',
-    color: '#E53935',
-    direccion: 'Panamericana Km 52.5, Pilar',
-    distancia: '2.4 km',
-    tiempo: '5 min',
-    coordenadasSimuladas: { top: 32, left: 62 },
-  },
-  {
-    id: '2',
-    nombre: 'Hospital F. Sanguinetti',
-    categoria: 'hospital',
-    categoriaText: 'Hospital',
-    icono: 'medical-bag',
-    color: '#E53935',
-    direccion: 'Víctor Vergani 850, Pilar',
-    distancia: '1.1 km',
-    tiempo: '3 min',
-    coordenadasSimuladas: { top: 48, left: 42 },
-  },
-  {
-    id: '3',
-    nombre: 'Comisaría Pilar 1ª',
-    categoria: 'comisaria',
-    categoriaText: 'Comisaría / Seguridad',
-    icono: 'shield-account',
-    color: '#1E88E5',
-    direccion: 'Tucumán 555, Pilar Centro',
-    distancia: '0.8 km',
-    tiempo: '2 min',
-    coordenadasSimuladas: { top: 40, left: 48 },
-  },
-  {
-    id: '4',
-    nombre: 'SUM Centro Comunitario Pilar',
-    categoria: 'sum',
-    categoriaText: 'SUM / Centro Vecinal',
-    icono: 'account-group',
-    color: '#8E24AA',
-    direccion: 'San Martín 120, Pilar',
-    distancia: '1.5 km',
-    tiempo: '4 min',
-    coordenadasSimuladas: { top: 58, left: 55 },
-  },
-  {
-    id: '5',
-    nombre: 'Parroquia Ntra. Sra. del Pilar',
-    categoria: 'turismo',
-    categoriaText: 'Punto Turístico',
-    icono: 'church',
-    color: '#FB8C00',
-    direccion: 'Plaza 12 de Octubre, Pilar',
-    distancia: '0.5 km',
-    tiempo: '1 min',
-    coordenadasSimuladas: { top: 44, left: 38 },
-  },
-  {
-    id: '6',
-    nombre: 'Supermercado Carrefour Pilar',
-    categoria: 'supermercado',
-    categoriaText: 'Supermercado',
-    icono: 'cart',
-    color: '#43A047',
-    direccion: 'Av. Tratado de Pilar 300',
-    distancia: '2.0 km',
-    tiempo: '6 min',
-    coordenadasSimuladas: { top: 25, left: 30 },
-  },
-];
+// Hooks y tipos de datos
+import { useMaps } from '@/src/hooks/useMaps';
+import { PlaceCategory } from '@/src/servicios/map/type';
 
 export default function ExploreScreen() {
-  const [categoriaSel, setCategoriaSel] = useState<string>('todos');
-  const [lugarSeleccionado, setLugarSeleccionado] = useState<Lugar | null>(LUGARES_PILAR[0]);
-  const [modoRuta, setModoRuta] = useState<boolean>(false);
+  const { t } = useTranslation();
 
-  // Filto lugares según categoría seleccionada
-  const lugaresFiltrados = categoriaSel === 'todos'
-    ? LUGARES_PILAR
-    : LUGARES_PILAR.filter(l => l.categoria === categoriaSel);
+  // Parámetros recibidos desde otras pantallas
+  const params = useLocalSearchParams() as {
+    nombre?: string;
+    direccion?: string;
+    lat?: string;
+    lon?: string;
+  };
+  const lastProcessedParamRef = useRef<string | null>(null);
+
+  // ============================================================
+  // Estados para categoría, modo de navegación y búsqueda interactiva
+  // ============================================================
+  const [categoriaSel, setCategoriaSel] = useState<PlaceCategory | null>(null);
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [textoBusqueda, setTextoBusqueda] = useState('');
+  const [centrarEnUsuario, setCentrarEnUsuario] = useState(0); // contador para disparar re-center
+  const [cardHeight, setCardHeight] = useState(0);
+
+  // Animación slide-up del bottom sheet (estilo Google Maps)
+  const slideAnim = useRef(new Animated.Value(400)).current;
+  // ============================================================
+
+  // ============================================================
+  // Consumo del Hook useMaps con todas las funciones de ubicación, rutas y búsqueda
+  // ============================================================
+  const {
+    userLocation,
+    places,
+    selectedPlace,
+    routeData,
+    loading,
+    errorMsg,
+    transportMode,
+    loadPlaces,
+    searchPlaces,
+    calculateRouteTo,
+    changeTransportMode,
+    clearSelection,
+    clearPlaces,
+    focusOnPlace,
+  } = useMaps();
+  // ============================================================
+
+  // ============================================================
+  // Animación de entrada/salida del bottom sheet al aparecer/desaparecer selectedPlace
+  // ============================================================
+  useEffect(() => {
+    if (selectedPlace) {
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        useNativeDriver: true,
+        tension: 65,
+        friction: 11,
+      }).start();
+    } else {
+      Animated.timing(slideAnim, {
+        toValue: 400,
+        duration: 220,
+        useNativeDriver: true,
+      }).start(() => setCardHeight(0));
+    }
+  }, [selectedPlace]);
+  // ============================================================
+
+  // ============================================================
+  // Si llegamos a la pantalla del mapa con un lugar específico desde Inicio,
+  // lo marcamos, lo enfocamos y trazamos la ruta hacia él
+  // ============================================================
+  useEffect(() => {
+    const hasTarget = Boolean(params.nombre || params.direccion || params.lat);
+    if (!hasTarget) return;
+
+    const paramKey = `${params.nombre ?? ''}|${params.direccion ?? ''}|${params.lat ?? ''}|${params.lon ?? ''}`;
+    if (lastProcessedParamRef.current === paramKey && selectedPlace) return;
+    lastProcessedParamRef.current = paramKey;
+
+    if (params.nombre) {
+      setTextoBusqueda(params.nombre);
+    } else if (params.direccion) {
+      setTextoBusqueda(params.direccion);
+    }
+
+    const latNum = params.lat ? parseFloat(params.lat) : undefined;
+    const lonNum = params.lon ? parseFloat(params.lon) : undefined;
+
+    focusOnPlace(params.nombre, params.direccion, latNum, lonNum);
+  }, [params.nombre, params.direccion, params.lat, params.lon, userLocation]);
+  // ============================================================
+
+  // ============================================================
+  // Función para filtrar lugares cuando el usuario toca un cuadro de categoría
+  // ============================================================
+  const handleFiltro = (cat: PlaceCategory) => {
+    if (categoriaSel === cat) {
+      setCategoriaSel(null);
+      clearPlaces();
+    } else {
+      setCategoriaSel(cat);
+      loadPlaces(cat);
+    }
+  };
+  // ============================================================
+
+  // ============================================================
+  // Función para ejecutar la búsqueda por texto libre con Nominatim
+  // ============================================================
+  const handleBuscar = () => {
+    if (textoBusqueda.trim()) {
+      searchPlaces(textoBusqueda);
+    }
+  };
+  // ============================================================
+
+  // ============================================================
+  // Función al tocar un marcador en el mapa para trazar la ruta hacia ese lugar
+  // ============================================================
+  const handleMarkerPress = (placeId: string) => {
+    const place = places.find((p) => p.id === placeId);
+    if (place) {
+      calculateRouteTo(place);
+    }
+  };
+  // ============================================================
+
+  // ============================================================
+  // Función iniciar navegación
+  // ============================================================
+  const iniciarNavegacion = () => {
+    setIsNavigating(true);
+  };
+
+  const salirNavegacion = () => {
+    setIsNavigating(false);
+    clearSelection();
+  };
+  // ============================================================
 
   return (
     <ThemedView style={styles.container}>
       <SwipeableScreen currentTab="mapa">
         <SafeAreaView style={styles.safeArea} edges={['top']}>
-          <AppHeader />
 
-          {/* header Superior con Búsqueda */}
-          <View style={styles.header}>
-            <View style={styles.searchBar}>
-              <Ionicons name="search" size={20} color="#666" style={{ marginRight: 8 }} />
-              <Text style={styles.searchText}>Buscar en Pilar (Ej: Hospitales, SUM)...</Text>
-              <TouchableOpacity style={styles.gpsButton}>
-                <Ionicons name="locate" size={18} color="#2196F3" />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtrosContainer}>
-              <TouchableOpacity
-                style={[styles.chip, categoriaSel === 'todos' && styles.chipActivo]}
-                onPress={() => setCategoriaSel('todos')}
-              >
-                <Text style={[styles.chipText, categoriaSel === 'todos' && styles.chipTextActivo]}>🗺️ Todos</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.chip, categoriaSel === 'hospital' && styles.chipActivo]}
-                onPress={() => setCategoriaSel('hospital')}
-              >
-                <Text style={[styles.chipText, categoriaSel === 'hospital' && styles.chipTextActivo]}>🏥 Hospitales</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.chip, categoriaSel === 'comisaria' && styles.chipActivo]}
-                onPress={() => setCategoriaSel('comisaria')}
-              >
-                <Text style={[styles.chipText, categoriaSel === 'comisaria' && styles.chipTextActivo]}>👮 Comisarías</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.chip, categoriaSel === 'sum' && styles.chipActivo]}
-                onPress={() => setCategoriaSel('sum')}
-              >
-                <Text style={[styles.chipText, categoriaSel === 'sum' && styles.chipTextActivo]}>🏛️ SUM / Salud</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.chip, categoriaSel === 'supermercado' && styles.chipActivo]}
-                onPress={() => setCategoriaSel('supermercado')}
-              >
-                <Text style={[styles.chipText, categoriaSel === 'supermercado' && styles.chipTextActivo]}>🛒 Supermercados</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.chip, categoriaSel === 'turismo' && styles.chipActivo]}
-                onPress={() => setCategoriaSel('turismo')}
-              >
-                <Text style={[styles.chipText, categoriaSel === 'turismo' && styles.chipTextActivo]}>⛪ Turismo</Text>
-              </TouchableOpacity>
-            </ScrollView>
-          </View>
-
-          {/* ares de  Visual Simulado */}
+          {/* ============================================================ */}
+          {/* Área del mapa a pantalla completa estilo Google Maps */}
+          {/* ============================================================ */}
           <View style={styles.mapArea}>
-            <View style={styles.mapCanvas}>
-              <View style={[styles.street, { top: '45%', width: '100%', height: 16 }]} />
-              <View style={[styles.street, { left: '45%', height: '100%', width: 16 }]} />
-              <View style={[styles.streetDiagonal, { top: '20%', left: '10%', width: '80%', height: 10 }]} />
-              
-              <View style={styles.riverArea}>
-                <Text style={styles.riverText}>Río Luján - Pilar</Text>
+            {errorMsg ? (
+              <View style={styles.centeredMsg}>
+                <Ionicons name="warning-outline" size={48} color="#E53935" />
+                <Text style={{ color: '#E53935', textAlign: 'center', marginTop: 10, fontWeight: 'bold' }}>{errorMsg}</Text>
+                <Text style={{ textAlign: 'center', paddingHorizontal: 20, marginTop: 8, color: '#666' }}>
+                  {t('map.gpsPermissionHelp')}
+                </Text>
               </View>
-
-              <View style={[styles.userGpsPin, { top: '50%', left: '44%' }]}>
-                <View style={styles.userPulse} />
-                <Ionicons name="navigate-circle" size={32} color="#2196F3" />
+            ) : userLocation ? (
+              <LeafletMap
+                userLocation={userLocation}
+                places={isNavigating ? [] : places}
+                selectedPlace={selectedPlace}
+                routeData={routeData}
+                onMarkerPress={handleMarkerPress}
+                centerOnUser={centrarEnUsuario}
+              />
+            ) : (
+              <View style={styles.centeredMsg}>
+                <ActivityIndicator size="large" color="#1A73E8" />
+                <Text style={{ marginTop: 10, color: '#5F6368', fontWeight: '500' }}>{t('map.searchingGps')}</Text>
               </View>
+            )}
 
-              {lugaresFiltrados.map((lugar) => {
-                const esSeleccionado = lugarSeleccionado?.id === lugar.id;
-                return (
-                  <TouchableOpacity
-                    key={lugar.id}
-                    style={[
-                      styles.markerPin,
-                      {
-                        top: `${lugar.coordenadasSimuladas.top}%`,
-                        left: `${lugar.coordenadasSimuladas.left}%`,
-                        backgroundColor: lugar.color,
-                        transform: [{ scale: esSeleccionado ? 1.25 : 1 }],
-                        zIndex: esSeleccionado ? 10 : 2,
-                      },
-                    ]}
-                    onPress={() => {
-                      setLugarSeleccionado(lugar);
-                      setModoRuta(false);
-                    }}
-                  >
-                    <MaterialCommunityIcons name={lugar.icono as any} size={18} color="#FFF" />
-                  </TouchableOpacity>
-                );
-              })}
-
-              {modoRuta && lugarSeleccionado && (
-                <View style={styles.routeOverlay}>
-                  <View style={styles.routeLine} />
-                  <View style={styles.routeBanner}>
-                    <Ionicons name="navigate-outline" size={20} color="#FFF" />
-                    <Text style={styles.routeBannerText}>
-                      En 200m gire a la derecha por Av. Tratado de Pilar
-                    </Text>
-                  </View>
+            {/* ============================================================ */}
+            {/* Modo Navegación: Panel superior activo estilo Google Maps */}
+            {/* ============================================================ */}
+            {isNavigating && selectedPlace && (
+              <View style={styles.navTopBar}>
+                <View style={styles.navTopIconContainer}>
+                  <Ionicons name="navigate" size={24} color="#FFFFFF" />
                 </View>
-              )}
-            </View>
-          </View>
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text style={styles.navTopTitle} numberOfLines={1}>
+                    {t('map.enRouteTo', { name: selectedPlace.name })}
+                  </Text>
+                  <Text style={styles.navTopSubtitle} numberOfLines={1}>
+                    {routeData ? `${routeData.distanceKm} km • ${routeData.durationMin} ${t('map.estimatedMin')}` : selectedPlace.address}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.navTopCloseBtn}
+                  onPress={salirNavegacion}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="close" size={20} color="#FFFFFF" />
+                </TouchableOpacity>
+              </View>
+            )}
+            {/* ============================================================ */}
 
-          {/* Tarjeta Inferior con la Información del Lugar Seleccionado */}
-          {lugarSeleccionado && (
-            <View style={styles.cardInfo}>
-              <View style={styles.cardHeader}>
-                <View style={{ flex: 1 }}>
-                  <View style={[styles.badgeCategory, { backgroundColor: lugarSeleccionado.color + '22' }]}>
-                    <Text style={[styles.badgeText, { color: lugarSeleccionado.color }]}>
-                      {lugarSeleccionado.categoriaText}
+            {/* ============================================================ */}
+            {/* Barra flotante de búsqueda y filtros alineada pixel-perfect */}
+            {/* ============================================================ */}
+            {!isNavigating && (
+              <View style={styles.floatingSearchWrapper}>
+                <View style={styles.floatingSearchBar}>
+                  {/* Logo sutil PaseAR como ícono de app */}
+                  <Image
+                    source={require('@/assets/images/logos/logoapp.png')}
+                    style={styles.appLogoMini}
+                    resizeMode="contain"
+                  />
+
+                  <TextInput
+                    style={styles.searchInput}
+                    placeholder={t('map.searchPlaceholderPasear')}
+                    placeholderTextColor="#70757A"
+                    value={textoBusqueda}
+                    onChangeText={setTextoBusqueda}
+                    onSubmitEditing={handleBuscar}
+                    returnKeyType="search"
+                  />
+
+                  {textoBusqueda.length > 0 && (
+                    <TouchableOpacity
+                      onPress={() => {
+                        setTextoBusqueda('');
+                        if (categoriaSel) {
+                          loadPlaces(categoriaSel);
+                        } else {
+                          clearPlaces();
+                        }
+                      }}
+                      style={{ padding: 4 }}
+                    >
+                      <Ionicons name="close-circle" size={18} color="#9AA0A6" />
+                    </TouchableOpacity>
+                  )}
+
+                  {loading ? (
+                    <ActivityIndicator size="small" color="#1A73E8" style={{ marginLeft: 6 }} />
+                  ) : (
+                    <TouchableOpacity onPress={handleBuscar} style={{ padding: 4 }}>
+                      <Ionicons name="search" size={20} color="#1A73E8" />
+                    </TouchableOpacity>
+                  )}
+                </View>
+
+                {/*  categorías con íconos vectoriales delgados */}
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.filtrosContainer}
+                  contentContainerStyle={styles.filtrosContent}
+                >
+                  <TouchableOpacity
+                    style={[styles.chip, categoriaSel === 'all' && styles.chipActivo]}
+                    onPress={() => handleFiltro('all')}
+                  >
+                    <Ionicons
+                      name="compass-outline"
+                      size={15}
+                      color={categoriaSel === 'all' ? '#FFFFFF' : '#1A73E8'}
+                      style={{ marginRight: 6 }}
+                    />
+                    <Text style={[styles.chipText, categoriaSel === 'all' && styles.chipTextActivo]}>
+                      {t('map.categories.all')}
                     </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.chip, categoriaSel === 'hospital' && styles.chipActivo]}
+                    onPress={() => handleFiltro('hospital')}
+                  >
+                    <Ionicons
+                      name="medkit-outline"
+                      size={15}
+                      color={categoriaSel === 'hospital' ? '#FFFFFF' : '#E53935'}
+                      style={{ marginRight: 6 }}
+                    />
+                    <Text style={[styles.chipText, categoriaSel === 'hospital' && styles.chipTextActivo]}>
+                      {t('map.categories.hospital')}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.chip, categoriaSel === 'police' && styles.chipActivo]}
+                    onPress={() => handleFiltro('police')}
+                  >
+                    <Ionicons
+                      name="shield-checkmark-outline"
+                      size={15}
+                      color={categoriaSel === 'police' ? '#FFFFFF' : '#1E88E5'}
+                      style={{ marginRight: 6 }}
+                    />
+                    <Text style={[styles.chipText, categoriaSel === 'police' && styles.chipTextActivo]}>
+                      {t('map.categories.police')}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.chip, categoriaSel === 'supermarket' && styles.chipActivo]}
+                    onPress={() => handleFiltro('supermarket')}
+                  >
+                    <Ionicons
+                      name="cart-outline"
+                      size={15}
+                      color={categoriaSel === 'supermarket' ? '#FFFFFF' : '#43A047'}
+                      style={{ marginRight: 6 }}
+                    />
+                    <Text style={[styles.chipText, categoriaSel === 'supermarket' && styles.chipTextActivo]}>
+                      {t('map.categories.supermarket')}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.chip, categoriaSel === 'restaurant' && styles.chipActivo]}
+                    onPress={() => handleFiltro('restaurant')}
+                  >
+                    <Ionicons
+                      name="restaurant-outline"
+                      size={15}
+                      color={categoriaSel === 'restaurant' ? '#FFFFFF' : '#FB8C00'}
+                      style={{ marginRight: 6 }}
+                    />
+                    <Text style={[styles.chipText, categoriaSel === 'restaurant' && styles.chipTextActivo]}>
+                      {t('map.categories.restaurant')}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.chip, categoriaSel === 'park' && styles.chipActivo]}
+                    onPress={() => handleFiltro('park')}
+                  >
+                    <Ionicons
+                      name="leaf-outline"
+                      size={15}
+                      color={categoriaSel === 'park' ? '#FFFFFF' : '#4CAF50'}
+                      style={{ marginRight: 6 }}
+                    />
+                    <Text style={[styles.chipText, categoriaSel === 'park' && styles.chipTextActivo]}>
+                      {t('map.categories.park')}
+                    </Text>
+                  </TouchableOpacity>
+                </ScrollView>
+              </View>
+            )}
+            {/* ============================================================ */}
+
+            {/* ============================================================ */}
+            {/* Botón flotante circular "Mi Ubicación" */}
+            {/* Posicionado a 175px (o sobre la tarjeta) para no solapar el botón de IA */}
+            {/* ============================================================ */}
+            {!isNavigating && (
+              <TouchableOpacity
+                style={[
+                  styles.btnMiUbicacion,
+                  selectedPlace && { bottom: cardHeight > 0 ? cardHeight + 16 : 340 }
+                ]}
+                onPress={() => setCentrarEnUsuario(n => n + 1)}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="locate" size={22} color="#1A73E8" />
+              </TouchableOpacity>
+            )}
+            {/* ============================================================ */}
+
+          </View>
+          {/* ============================================================ */}
+
+          {/* ============================================================ */}
+          {/* TARJETA INFERIOR estilo Google Maps Bottom Sheet */}
+          {/* ============================================================ */}
+          {selectedPlace && !isNavigating && (
+            <Animated.View
+              style={[
+                styles.cardInfo,
+                { transform: [{ translateY: slideAnim }] },
+              ]}
+              onLayout={(e: any) => {
+                const h = e.nativeEvent.layout.height;
+                if (h > 0) setCardHeight(h);
+              }}
+            >
+              {/* Barrita de arrastre sutil estilo Material Design */}
+              <View style={styles.dragHandle} />
+
+              {/* Cabecera: nombre del lugar y botón de cierre moderno */}
+              <View style={styles.cardHeader}>
+                <View style={{ flex: 1, paddingRight: 8 }}>
+                  <Text style={styles.cardTitle}>{selectedPlace.name}</Text>
+                  <View style={styles.addressRow}>
+                    <Ionicons name="location-sharp" size={14} color="#EA4335" style={{ marginRight: 4, marginTop: 2 }} />
+                    <Text style={styles.cardAddress} numberOfLines={2}>{selectedPlace.address}</Text>
                   </View>
-                  <Text style={styles.cardTitle}>{lugarSeleccionado.nombre}</Text>
-                  <Text style={styles.cardAddress}>📍 {lugarSeleccionado.direccion}</Text>
                 </View>
                 <TouchableOpacity
                   style={styles.closeCardButton}
-                  onPress={() => setLugarSeleccionado(null)}
+                  onPress={clearSelection}
+                  activeOpacity={0.7}
                 >
-                  <Ionicons name="close-circle" size={24} color="#999" />
+                  <Ionicons name="close" size={18} color="#5F6368" />
                 </TouchableOpacity>
               </View>
 
-              <View style={styles.metricsRow}>
-                <View style={styles.metricItem}>
-                  <Ionicons name="map-outline" size={18} color="#2196F3" />
-                  <Text style={styles.metricValue}>{lugarSeleccionado.distancia}</Text>
-                  <Text style={styles.metricLabel}>Distancia</Text>
-                </View>
+              {/* Selector de modo de transporte */}
+              <View style={styles.transportSelector}>
+                <TouchableOpacity
+                  style={[styles.transportBtn, transportMode === 'driving' && styles.transportBtnActive]}
+                  onPress={() => changeTransportMode('driving')}
+                >
+                  <Ionicons name="car" size={19} color={transportMode === 'driving' ? '#1A73E8' : '#70757A'} />
+                  <Text style={[styles.transportBtnText, transportMode === 'driving' && styles.transportBtnTextActive]}>
+                    {t('map.transport.car')}
+                  </Text>
+                  {routeData && transportMode === 'driving' && (
+                    <Text style={styles.transportBtnTime}>{routeData.durationMin} {t('map.min')}</Text>
+                  )}
+                </TouchableOpacity>
 
-                <View style={styles.metricDivider} />
+                <TouchableOpacity
+                  style={[styles.transportBtn, transportMode === 'foot' && styles.transportBtnActive]}
+                  onPress={() => changeTransportMode('foot')}
+                >
+                  <Ionicons name="walk" size={19} color={transportMode === 'foot' ? '#1A73E8' : '#70757A'} />
+                  <Text style={[styles.transportBtnText, transportMode === 'foot' && styles.transportBtnTextActive]}>
+                    {t('map.transport.walk')}
+                  </Text>
+                  {routeData && transportMode === 'foot' && (
+                    <Text style={styles.transportBtnTime}>{routeData.durationMin} {t('map.min')}</Text>
+                  )}
+                </TouchableOpacity>
 
-                <View style={styles.metricItem}>
-                  <Ionicons name="time-outline" size={18} color="#2196F3" />
-                  <Text style={styles.metricValue}>{lugarSeleccionado.tiempo}</Text>
-                  <Text style={styles.metricLabel}>Tiempo est.</Text>
-                </View>
-
-                <View style={styles.metricDivider} />
-
-                <View style={styles.metricItem}>
-                  <Ionicons name="car-outline" size={18} color="#2196F3" />
-                  <Text style={styles.metricValue}>Auto / Colectivo</Text>
-                  <Text style={styles.metricLabel}>Transporte</Text>
-                </View>
+                <TouchableOpacity
+                  style={[styles.transportBtn, transportMode === 'bike' && styles.transportBtnActive]}
+                  onPress={() => changeTransportMode('bike')}
+                >
+                  <Ionicons name="bicycle" size={19} color={transportMode === 'bike' ? '#1A73E8' : '#70757A'} />
+                  <Text style={[styles.transportBtnText, transportMode === 'bike' && styles.transportBtnTextActive]}>
+                    {t('map.transport.bike')}
+                  </Text>
+                  {routeData && transportMode === 'bike' && (
+                    <Text style={styles.transportBtnTime}>{routeData.durationMin} {t('map.min')}</Text>
+                  )}
+                </TouchableOpacity>
               </View>
 
-              <View style={styles.actionButtonsRow}>
-                {!modoRuta ? (
-                  <TouchableOpacity
-                    style={styles.btnPrimary}
-                    onPress={() => setModoRuta(true)}
-                  >
-                    <Ionicons name="navigate" size={18} color="#FFF" style={{ marginRight: 6 }} />
-                    <Text style={styles.btnPrimaryText}>Trazar Ruta</Text>
-                  </TouchableOpacity>
-                ) : (
-                  <TouchableOpacity
-                    style={styles.btnSuccess}
-                    onPress={() => alert('¡Navegación GPS Iniciada para la Expo!')}
-                  >
-                    <Ionicons name="play-circle" size={20} color="#FFF" style={{ marginRight: 6 }} />
-                    <Text style={styles.btnPrimaryText}>Iniciar Navegación</Text>
-                  </TouchableOpacity>
-                )}
+              {/* Métricas estimadas de distancia y tiempo */}
+              {routeData ? (
+                <View style={styles.metricsRow}>
+                  <View style={styles.metricItem}>
+                    <Text style={styles.metricBigValue}>{routeData.distanceKm} km</Text>
+                    <Text style={styles.metricLabel}>{t('map.distance')}</Text>
+                  </View>
+                  <View style={styles.metricDivider} />
+                  <View style={styles.metricItem}>
+                    <Text style={styles.metricBigValue}>{routeData.durationMin} min</Text>
+                    <Text style={styles.metricLabel}>{t('map.estimatedTime')}</Text>
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.metricsRow}>
+                  <ActivityIndicator size="small" color="#1A73E8" />
+                  <Text style={{ marginLeft: 10, color: '#70757A', fontSize: 13 }}>{t('map.calculatingRoute')}</Text>
+                </View>
+              )}
 
-                {modoRuta && (
-                  <TouchableOpacity
-                    style={styles.btnSecondary}
-                    onPress={() => setModoRuta(false)}
-                  >
-                    <Text style={styles.btnSecondaryText}>Cancelar Ruta</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            </View>
+              {/* Botón Iniciar Navegación estilo Google Maps */}
+              <TouchableOpacity
+                style={styles.btnNavegar}
+                onPress={iniciarNavegacion}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="navigate" size={19} color="#FFF" style={{ marginRight: 8 }} />
+                <Text style={styles.btnPrimaryText}>{t('map.startNavigation')}</Text>
+              </TouchableOpacity>
+            </Animated.View>
           )}
+          {/* ============================================================ */}
+
+          {/* ============================================================ */}
+          {/* Botón flotante para finalizar navegación */}
+          {/* ============================================================ */}
+          {isNavigating && (
+            <TouchableOpacity
+              style={styles.btnSalirNav}
+              onPress={salirNavegacion}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="close-circle" size={20} color="#FFF" style={{ marginRight: 6 }} />
+              <Text style={{ color: '#FFF', fontWeight: 'bold', fontSize: 14 }}>{t('map.endNavigation')}</Text>
+            </TouchableOpacity>
+          )}
+          {/* ============================================================ */}
 
         </SafeAreaView>
       </SwipeableScreen>
@@ -314,168 +526,162 @@ export default function ExploreScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F5F7FA',
-  },
-  safeArea: {
-    flex: 1,
-  },
-  header: {
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  safeArea: { flex: 1 },
+  mapArea: { flex: 1, position: 'relative' },
+  centeredMsg: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
+
+  // ============================================================
+  // Modo Navegación: Barra superior verde esmeralda estilo Google Maps
+  // ============================================================
+  navTopBar: {
+    position: 'absolute',
+    top: 10,
+    left: 14,
+    right: 14,
+    backgroundColor: '#0F9D58', // Verde Google Maps navegación
+    borderRadius: 16,
     paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 8,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
-    elevation: 3,
-    zIndex: 10,
-  },
-  searchBar: {
+    paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EDF2F7',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 10,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    zIndex: 60,
   },
-  searchText: {
-    flex: 1,
-    color: '#718096',
-    fontSize: 14,
-  },
-  gpsButton: {
-    padding: 4,
-    backgroundColor: '#EBF8FF',
-    borderRadius: 8,
-  },
-  filtrosContainer: {
-    flexDirection: 'row',
-    marginBottom: 4,
-  },
-  chip: {
-    backgroundColor: '#EDF2F7',
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    marginRight: 8,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  chipActivo: {
-    backgroundColor: '#2196F3',
-    borderColor: '#2196F3',
-  },
-  chipText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#4A5568',
-  },
-  chipTextActivo: {
-    color: '#FFFFFF',
-  },
-  mapArea: {
-    flex: 1,
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  mapCanvas: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#E6EEF4',
-  },
-  street: {
-    position: 'absolute',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#CBD5E0',
-  },
-  streetDiagonal: {
-    position: 'absolute',
-    backgroundColor: '#FFFFFF',
-    transform: [{ rotate: '-25deg' }],
-  },
-  riverArea: {
-    position: 'absolute',
-    top: '10%',
-    right: '5%',
-    width: 140,
-    height: 80,
-    backgroundColor: '#BEE3F8',
-    borderRadius: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    opacity: 0.8,
-  },
-  riverText: {
-    fontSize: 10,
-    color: '#2B6CB0',
-    fontWeight: 'bold',
-  },
-  userGpsPin: {
-    position: 'absolute',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 20,
-  },
-  userPulse: {
-    position: 'absolute',
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(33, 150, 243, 0.25)',
-  },
-  markerPin: {
-    position: 'absolute',
+  navTopIconContainer: {
     width: 36,
     height: 36,
     borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3,
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
   },
-  routeOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-  },
-  routeLine: {
-    position: 'absolute',
-    top: '44%',
-    left: '46%',
-    width: 120,
-    height: 4,
-    backgroundColor: '#2196F3',
-    transform: [{ rotate: '-45deg' }],
-    borderRadius: 2,
-  },
-  routeBanner: {
-    marginTop: 16,
-    backgroundColor: '#2D3748',
-    borderRadius: 24,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    elevation: 6,
-  },
-  routeBannerText: {
+  navTopTitle: {
     color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  navTopSubtitle: {
+    color: 'rgba(255,255,255,0.9)',
     fontSize: 13,
-    fontWeight: '600',
+    marginTop: 2,
+  },
+  navTopCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginLeft: 8,
   },
+
+  // ============================================================
+  // Barra flotante de búsqueda y filtros alineada
+  // ============================================================
+  floatingSearchWrapper: {
+    position: 'absolute',
+    top: 10,
+    left: 0,
+    right: 0,
+    zIndex: 50,
+  },
+  floatingSearchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 28,
+    marginHorizontal: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#E8EAED',
+  },
+  appLogoMini: {
+    width: 28,
+    height: 28,
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    color: '#202124',
+    fontSize: 15,
+    paddingVertical: 0,
+  },
+  filtrosContainer: {
+    flexDirection: 'row',
+  },
+  filtrosContent: {
+    paddingHorizontal: 14,
+    paddingBottom: 4,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: '#DADCE0',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+  },
+  chipActivo: {
+    backgroundColor: '#1A73E8',
+    borderColor: '#1A73E8',
+  },
+  chipText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#3C4043',
+  },
+  chipTextActivo: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+
+  // ============================================================
+  // Botón circular flotante "Mi Ubicación"
+  // Separado verticalmente para no superponerse con el FAB de la IA
+  // ============================================================
+  btnMiUbicacion: {
+    position: 'absolute',
+    bottom: 175,
+    right: 20,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.22,
+    shadowRadius: 5,
+    zIndex: 40,
+    borderWidth: 1,
+    borderColor: '#E8EAED',
+  },
+
+  // ============================================================
+  // Bottom Sheet estilo Google Maps
+  // ============================================================
   cardInfo: {
     position: 'absolute',
     bottom: 0,
@@ -484,110 +690,163 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    padding: 20,
-    elevation: 12,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    paddingTop: 8,
+    elevation: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
+    shadowOpacity: 0.16,
+    shadowRadius: 10,
+    borderWidth: 1,
+    borderColor: '#F1F3F4',
+  },
+  dragHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#DADCE0',
+    alignSelf: 'center',
+    marginBottom: 12,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-  },
-  badgeCategory: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginBottom: 6,
-  },
-  badgeText: {
-    fontSize: 11,
-    fontWeight: 'bold',
+    marginBottom: 4,
   },
   cardTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1A202C',
+    fontWeight: '700',
+    color: '#202124',
+    letterSpacing: 0.1,
+  },
+  addressRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 4,
   },
   cardAddress: {
     fontSize: 13,
-    color: '#718096',
-    marginTop: 2,
+    color: '#5F6368',
+    lineHeight: 18,
+    flex: 1,
   },
   closeCardButton: {
-    padding: 2,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F1F3F4',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
   },
   metricsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    backgroundColor: '#F7FAFC',
+    backgroundColor: '#F8F9FA',
     borderRadius: 14,
     paddingVertical: 12,
-    marginVertical: 14,
+    marginVertical: 10,
     borderWidth: 1,
-    borderColor: '#EDF2F7',
+    borderColor: '#E8EAED',
   },
-  metricItem: {
+  metricItem: { alignItems: 'center' },
+  metricBigValue: { fontSize: 20, fontWeight: '700', color: '#1A73E8' },
+  metricLabel: { fontSize: 11, color: '#70757A', marginTop: 2 },
+  metricDivider: { width: 1, height: 28, backgroundColor: '#DADCE0' },
+
+  // ============================================================
+  // Selector de transporte estilo Google Maps
+  // ============================================================
+  transportSelector: {
+    flexDirection: 'row',
+    backgroundColor: '#F1F3F4',
+    borderRadius: 12,
+    padding: 3,
+    marginTop: 10,
+  },
+  transportBtn: {
+    flex: 1,
+    flexDirection: 'column',
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 7,
+    borderRadius: 9,
   },
-  metricValue: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#2D3748',
+  transportBtnActive: {
+    backgroundColor: '#FFFFFF',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  transportBtnText: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: '#70757A',
     marginTop: 2,
   },
-  metricLabel: {
-    fontSize: 11,
-    color: '#A0AEC0',
+  transportBtnTextActive: {
+    color: '#1A73E8',
+    fontWeight: '700',
   },
-  metricDivider: {
-    width: 1,
-    height: 24,
-    backgroundColor: '#E2E8F0',
+  transportBtnTime: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#1A73E8',
+    backgroundColor: '#E8F0FE',
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    marginTop: 3,
+    overflow: 'hidden',
   },
-  actionButtonsRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  btnPrimary: {
-    flex: 1,
-    backgroundColor: '#2196F3',
-    borderRadius: 14,
-    paddingVertical: 14,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 2,
-  },
-  btnSuccess: {
-    flex: 1,
-    backgroundColor: '#388E3C',
-    borderRadius: 14,
-    paddingVertical: 14,
+
+  // ============================================================
+  // Botón Iniciar Navegación
+  // ============================================================
+  btnNavegar: {
+    backgroundColor: '#1A73E8',
+    borderRadius: 24,
+    paddingVertical: 13,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 2,
-  },
-  btnSecondary: {
-    backgroundColor: '#EDF2F7',
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
+    marginTop: 4,
+    elevation: 4,
+    shadowColor: '#1A73E8',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
   },
   btnPrimaryText: {
     color: '#FFFFFF',
     fontSize: 15,
-    fontWeight: 'bold',
+    fontWeight: '700',
+    letterSpacing: 0.2,
   },
-  btnSecondaryText: {
-    color: '#4A5568',
-    fontSize: 14,
-    fontWeight: '600',
+
+  // ============================================================
+  // Botón Salir de Navegación
+  // ============================================================
+  btnSalirNav: {
+    position: 'absolute',
+    bottom: 24,
+    alignSelf: 'center',
+    backgroundColor: '#D93025', // Rojo Google
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 22,
+    paddingVertical: 12,
+    borderRadius: 28,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    zIndex: 100,
   },
 });
