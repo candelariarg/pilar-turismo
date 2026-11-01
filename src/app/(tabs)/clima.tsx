@@ -69,7 +69,7 @@ export default function ClimaScreen() {
           {
             titulo: 'Tarde de compras y entretenimiento',
             descripcion: 'Recorré las tiendas cubiertas, el patio de comidas y locales.',
-            lugar: 'Las Palmas del Pilar / Torres del Sol',
+            lugar: 'Palmas del Pilar / Torres del Sol',
           },
           {
             titulo: 'Arte, cultura y diversión',
@@ -79,7 +79,7 @@ export default function ClimaScreen() {
           {
             titulo: 'Paseo comercial y gastronómico',
             descripcion: 'Un entorno abierto pero resguardado, ideal para cafeterías y boutiques.',
-            lugar: 'Complejo Colonial / La Aldea',
+            lugar: 'Colonial / La Aldea',
           },
         ],
       };
@@ -99,7 +99,7 @@ export default function ClimaScreen() {
           {
             titulo: 'Gastronomía y momentos únicos',
             descripcion: 'Un punto de encuentro clásico para saborear un buen café y conectar con la esencia de Pilar.',
-            lugar: 'La Aldea / Complejo Colonial',
+            lugar: 'La Aldea / Colonial',
           },
         ],
       };
@@ -322,19 +322,29 @@ export default function ClimaScreen() {
                     {clima.recomendacion.subtitulo}
                   </Text>
 
-                  {clima.recomendacion.actividades.map((actividad, index) => (
-                    <View key={index} style={styles.actividadCard}>
-                      <Text style={styles.actividadLugar}>
-                         {actividad.lugar}
-                      </Text>
-                      <Text style={styles.actividadTitulo}>
-                        {actividad.titulo}
-                      </Text>
-                      <Text style={styles.actividadDescripcion}>
-                        {actividad.descripcion}
-                      </Text>
-                    </View>
-                  ))}
+                 {clima.recomendacion.actividades.map((actividad, index) => (
+                <View key={index} style={styles.actividadCard}>
+    
+              {/* 1. Contenedor horizontal SOLO para el ícono + lugar */}
+             <View style={styles.lugarContainer}>
+             <Ionicons name="location-sharp" size={15} color="#1E88E5" style={{ marginRight: 4 }} />
+                <Text style={styles.actividadLugar}>
+                {actividad.lugar}
+                </Text>
+              </View>
+
+              {/* 2. Título (va suelto abajo) */}
+                <Text style={styles.actividadTitulo}>
+                 {actividad.titulo}
+                </Text>
+
+              {/* 3. Descripción (va suelta abajo) */}
+                <Text style={styles.actividadDescripcion}>
+                {actividad.descripcion}
+                </Text>
+
+              </View>
+              ))}
                 </>
               )}
 
@@ -582,6 +592,12 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 1,
   },
+  lugarContainer: {
+    flexDirection: 'row', // Pon el ícono y el texto en la misma línea
+    alignItems: 'center',  // Los alinea verticalmente al centro
+    marginBottom: 4,      // Separa el lugar del título
+  },
+  
   actividadLugar: {
     fontSize: 13,
     fontWeight: 'bold',
@@ -599,6 +615,7 @@ const styles = StyleSheet.create({
     color: '#4A5568',
     lineHeight: 18,
   },
+  
   // Botón inferior para cerrar el modal
   botonCerrarInferior: {
     backgroundColor: '#1E88E5',
