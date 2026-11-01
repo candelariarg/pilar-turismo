@@ -12,148 +12,8 @@ interface LeafletMapProps {
   centerOnUser?: number; // incrementar este valor dispara el re-centro hacia el GPS
 }
 
-// Esta función genera todo el HTML + CSS + JavaScript del mapa Leaflet
-// Se ejecuta dentro de un WebView (como una mini página web dentro de la app)
-const generateMapHTML = (
-  userLocation: LocationCoords,
-  places: Place[],
-  routeData: RouteData | null,
-  selectedPlace?: Place | null
-): string => {
-
-  // ============================================================
-  // Funciones para definir color y emoji según la categoría del lugar
-  // ============================================================
-  const getColor = (cat: string) => {
-    switch (cat) {
-      case 'hospital': return '#E53935';
-      case 'police': return '#1E88E5';
-      case 'supermarket': return '#43A047';
-      case 'restaurant': return '#FB8C00';
-      case 'park': return '#4CAF50';
-      case 'tourism': return '#8E24AA';
-      default: return '#757575';
-    }
-  };
-
-  const getEmoji = (cat: string) => {
-    switch (cat) {
-      case 'hospital': return '🏥';
-      case 'police': return '👮';
-      case 'supermarket': return '🛒';
-      case 'restaurant': return '🍽️';
-      case 'park': return '🌳';
-      case 'tourism': return '⛪';
-      default: return '📍';
-    }
-  };
-  // ============================================================
-
-  // ============================================================
-  // Generación dinámica de los marcadores en código JavaScript para Leaflet
-  // ============================================================
-  const markersJS = places.map((p) => {
-    const color = getColor(p.category);
-    const emoji = getEmoji(p.category);
-    const safeName = p.name.replace(/'/g, "\\'");
-    const safeAddr = p.address.replace(/'/g, "\\'");
-    return `
-      L.marker([${p.latitude}, ${p.longitude}], {
-        icon: L.divIcon({
-          className: 'custom-marker',
-          html: '<div style="background:${color};width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.35);font-size:18px;">${emoji}</div>',
-          iconSize: [36, 36],
-          iconAnchor: [18, 18]
-        })
-      })
-      .addTo(map)
-      .bindPopup('<b>${safeName}</b><br>${safeAddr}')
-      .on('click', function() {
-        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'markerPress', placeId: '${p.id}' }));
-      });
-    `;
-  }).join('\n');
-  // ============================================================
-
-  // ============================================================
-  // Trazado de ruta visual estilo Waze/Google Maps + Pin de llegada animado + Auto-encuadre fitBounds
-  // ============================================================
-  const safeDestName = selectedPlace ? selectedPlace.name.replace(/'/g, "\\'") : 'Punto de llegada';
-  const routeJS = (routeData && routeData.coordinates && routeData.coordinates.length > 0)
-    ? `
-      (function() {
-        var routeCoords = [${routeData.coordinates.map(c => `[${c.latitude},${c.longitude}]`).join(',')}];
-
-        // 1. Línea exterior (halo oscuro de contraste, estilo Waze / Google Maps)
-        var routeBorder = L.polyline(routeCoords, {
-          color: '#0D47A1',
-          weight: 9,
-          opacity: 0.95,
-          lineCap: 'round',
-          lineJoin: 'round'
-        }).addTo(map);
-
-        // 2. Línea interior (azul vibrante que resalta sobre las calles)
-        var routeCore = L.polyline(routeCoords, {
-          color: '#00B0FF',
-          weight: 5,
-          opacity: 1,
-          lineCap: 'round',
-          lineJoin: 'round'
-        }).addTo(map);
-
-        // 3. Pin de llegada destacado con animación de pulso y rebote
-        var destCoord = routeCoords[routeCoords.length - 1];
-        var destIcon = L.divIcon({
-          className: 'dest-marker',
-          html: '<div class="dest-marker-container"><div class="dest-pulse"></div><div class="dest-badge">🏁</div></div>',
-          iconSize: [44, 44],
-          iconAnchor: [22, 22]
-        });
-
-        L.marker(destCoord, { icon: destIcon, zIndexOffset: 2500 })
-          .addTo(map)
-          .bindPopup('<b>🎯 Destino: ${safeDestName}</b>');
-
-        // 4. Auto-encuadre inteligente (fitBounds) con margen inferior para no tapar la ruta con la tarjeta de información
-        var bounds = L.latLngBounds(routeCoords);
-        map.fitBounds(bounds, {
-          paddingTopLeft: [50, 50],
-          paddingBottomRight: [50, 260],
-          maxZoom: 16,
-          animate: true,
-          duration: 1.0
-        });
-      })();
-    `
-    : '';
-  // ============================================================
-
-  // ============================================================
-  // Auto-encuadre fluido para resultados de búsqueda y filtros
-  // Limita el alejamiento mínimo (minZoom: 13) para evitar descargas pesadas y mantener fluidez
-  // ============================================================
-  const placesBoundsJS = (!routeData && places && places.length > 0)
-    ? `
-      (function() {
-        var coords = [${places.map(p => `[${p.latitude},${p.longitude}]`).join(',')}];
-        if (coords.length > 1) {
-          var bounds = L.latLngBounds(coords);
-          map.flyToBounds(bounds, {
-            paddingTopLeft: [80, 40],
-            paddingBottomRight: [40, 40],
-            maxZoom: 16,
-            minZoom: 13,
-            duration: 1.0
-          });
-        } else if (coords.length === 1) {
-          map.flyTo(coords[0], 16, { duration: 1.0 });
-        }
-      })();
-    `
-    : '';
-  // ============================================================
-
+// Genera la página HTML base con Leaflet y los scripts de renderizado dinámico
+const generateBaseMapHTML = (userLocation: LocationCoords): string => {
   return `
     <!DOCTYPE html>
     <html>
@@ -163,112 +23,264 @@ const generateMapHTML = (
       <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
       <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body, #map { width: 100%; height: 100%; }
+        html, body, #map { width: 100%; height: 100%; background: #E8EAED; }
         .custom-marker { background: none !important; border: none !important; }
-        
-        /* Animación ubicación usuario */
+
+        /* Ocultar atribución nativa para ganar espacio visual limpio */
+        .leaflet-control-attribution { display: none !important; }
+
+        /* Botones de zoom flotantes estilo Google Maps (ubicados en el lateral derecho superior) */
+        .zoom-controls {
+          position: absolute;
+          top: 135px;
+          right: 16px;
+          z-index: 1000;
+          display: flex;
+          flex-direction: column;
+        }
+        .zoom-box {
+          background: #FFFFFF;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+        }
+        .zoom-btn {
+          width: 40px;
+          height: 40px;
+          background: #FFFFFF;
+          border: none;
+          font-size: 22px;
+          font-weight: 400;
+          color: #3C4043;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          -webkit-tap-highlight-color: transparent;
+          user-select: none;
+        }
+        .zoom-btn:active { background: #F1F3F4; }
+        .zoom-divider {
+          width: 100%;
+          height: 1px;
+          background: #E8EAED;
+        }
+
+        /* Animación pulso de la ubicación del usuario */
         .user-pulse {
-          width: 20px; height: 20px;
-          background: rgba(33, 150, 243, 0.35);
+          width: 22px; height: 22px;
+          background: rgba(26, 115, 232, 0.35);
           border-radius: 50%;
-          animation: pulse 2s infinite;
+          animation: pulse 2s infinite ease-out;
         }
         .user-dot {
           width: 14px; height: 14px;
-          background: #2196F3;
-          border: 3px solid white;
+          background: #1A73E8;
+          border: 3px solid #FFFFFF;
           border-radius: 50%;
           position: absolute;
-          top: 3px; left: 3px;
-          box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+          top: 4px; left: 4px;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.35);
         }
         @keyframes pulse {
-          0% { transform: scale(1); opacity: 1; }
-          100% { transform: scale(3); opacity: 0; }
-        }
-
-        /* Pin animado de llegada / destino */
-        .dest-marker {
-          background: none !important;
-          border: none !important;
-        }
-        .dest-marker-container {
-          position: relative;
-          width: 44px;
-          height: 44px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .dest-pulse {
-          position: absolute;
-          width: 44px;
-          height: 44px;
-          border-radius: 50%;
-          background: rgba(233, 30, 99, 0.4);
-          animation: destPulse 1.8s infinite ease-out;
-        }
-        .dest-badge {
-          position: relative;
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, #FF1744, #D50000);
-          border: 3px solid #FFFFFF;
-          box-shadow: 0 4px 10px rgba(0,0,0,0.45);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 18px;
-          animation: destBounce 1.2s infinite alternate ease-in-out;
-          z-index: 2;
-        }
-        @keyframes destPulse {
-          0% { transform: scale(0.6); opacity: 1; }
-          100% { transform: scale(1.8); opacity: 0; }
-        }
-        @keyframes destBounce {
-          0% { transform: translateY(0); }
-          100% { transform: translateY(-6px); }
+          0%   { transform: scale(0.8); opacity: 1; }
+          100% { transform: scale(2.8); opacity: 0; }
         }
       </style>
     </head>
     <body>
       <div id="map"></div>
+
+      <!-- Botonera de zoom -->
+      <div class="zoom-controls">
+        <div class="zoom-box">
+          <button class="zoom-btn" id="zoomIn" ontouchend="zoomIn(event)">+</button>
+          <div class="zoom-divider"></div>
+          <button class="zoom-btn" id="zoomOut" ontouchend="zoomOut(event)">−</button>
+        </div>
+      </div>
+
       <script>
         var map = L.map('map', {
           zoomControl: false
         }).setView([${userLocation.latitude}, ${userLocation.longitude}], 14);
+        window.map = map;
 
-        // ============================================================
-        // Capa de mapas moderna estilo Humanitarian OSM (colores pastel y sin API key)
-        // ============================================================
-        L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
-          attribution: '© OpenStreetMap contributors, Tiles courtesy of Humanitarian OpenStreetMap Team',
-          subdomains: 'abc',
+        // Capa de mapas moderna CartoDB Voyager (sin API key y estilo Google Maps)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+          attribution: '© OpenStreetMap © CARTO',
+          subdomains: 'abcd',
           maxZoom: 19
         }).addTo(map);
-        // ============================================================
 
-        // Marcador del usuario (punto azul con pulsación)
-        L.marker([${userLocation.latitude}, ${userLocation.longitude}], {
+        // Marcador del usuario (punto azul Google)
+        var userMarker = L.marker([${userLocation.latitude}, ${userLocation.longitude}], {
           icon: L.divIcon({
             className: 'custom-marker',
-            html: '<div style="position:relative;width:20px;height:20px;"><div class="user-pulse"></div><div class="user-dot"></div></div>',
-            iconSize: [20, 20],
-            iconAnchor: [10, 10]
+            html: '<div style="position:relative;width:22px;height:22px;"><div class="user-pulse"></div><div class="user-dot"></div></div>',
+            iconSize: [22, 22],
+            iconAnchor: [11, 11]
           }),
           zIndexOffset: 1000
-        }).addTo(map).bindPopup('📍 Tu ubicación');
+        }).addTo(map);
 
-        // Marcadores de los lugares turísticos
-        ${markersJS}
+        // Capas para marcadores y rutas dinámicas
+        var placesLayer = L.layerGroup().addTo(map);
+        var routeLayer = L.layerGroup().addTo(map);
 
-        // Auto-encuadre fluido para búsquedas y filtros
-        ${placesBoundsJS}
+        function getColor(cat) {
+          switch (cat) {
+            case 'hospital':    return '#E53935';
+            case 'police':      return '#1E88E5';
+            case 'supermarket': return '#43A047';
+            case 'restaurant':  return '#FB8C00';
+            case 'park':        return '#4CAF50';
+            case 'tourism':     return '#8E24AA';
+            default:            return '#5F6368';
+          }
+        }
 
-        // Trazado de ruta + pin animado + fitBounds automático
-        ${routeJS}
+        function getCategoryPath(cat, color) {
+          switch (cat) {
+            case 'hospital':
+              return "<rect x='16' y='12' width='4' height='12' rx='1' fill='" + color + "'/>"
+                   + "<rect x='12' y='16' width='12' height='4' rx='1' fill='" + color + "'/>";
+            case 'police':
+              return "<path d='M18 12 L22 14 v4 c0 3 -4 5 -4 5 s-4 -2 -4 -5 v-4 z' fill='" + color + "'/>";
+            case 'supermarket':
+              return "<path d='M13 14 h2 l1.5 5 h4.5 l1.5 -4 h-8' stroke='" + color + "' stroke-width='1.5' fill='none'/>"
+                   + "<circle cx='16' cy='21' r='1' fill='" + color + "'/>"
+                   + "<circle cx='20' cy='21' r='1' fill='" + color + "'/>";
+            case 'restaurant':
+              return "<path d='M14 12 v4 c0 1 1 2 2 2 v4 h1 v-4 c1 0 2 -1 2 -2 v-4 h-1 v3 h-1 v-3 h-1 v-3 z M21 12 v10 h1.5 v-5 c0 -2 -1.5 -3 -1.5 -5 z' fill='" + color + "'/>";
+            case 'park':
+              return "<path d='M18 12 L14 18 h2.5 L15 22 h6 L19.5 18 H22 Z' fill='" + color + "'/>";
+            case 'tourism':
+              return "<path d='M18 12 L19.5 16 h4.2 l-3.4 2.5 1.3 4 -3.6 -2.4 -3.6 2.4 1.3 -4 -3.4 -2.5 h4.2 z' fill='" + color + "'/>";
+            default:
+              return "<circle cx='18' cy='18' r='4' fill='" + color + "'/>";
+          }
+        }
+
+        function makePinSVG(cat, size, isSel) {
+          var color = getColor(cat);
+          var iconContent = getCategoryPath(cat, color);
+          var h = Math.round(size * 1.35);
+          var stroke = isSel ? "stroke='#202124' stroke-width='2'" : "";
+          return "<svg xmlns='http://www.w3.org/2000/svg' width='" + size + "' height='" + h + "' viewBox='0 0 36 48'>"
+            + "<filter id='sh-" + cat + (isSel ? "-sel" : "") + "'><feDropShadow dx='0' dy='2' stdDeviation='2.5' flood-opacity='0.45'/></filter>"
+            + "<path d='M18 0 C8.06 0 0 8.06 0 18 C0 31.5 18 48 18 48 C18 48 36 31.5 36 18 C36 8.06 27.94 0 18 0Z' fill='" + color + "' filter='url(#sh-" + cat + (isSel ? "-sel" : "") + ")' " + stroke + "/>"
+            + "<circle cx='18' cy='18' r='9' fill='white'/>"
+            + iconContent
+            + "</svg>";
+        }
+
+        function makeDestPinSVG() {
+          return "<svg xmlns='http://www.w3.org/2000/svg' width='44' height='60' viewBox='0 0 44 60'>"
+            + "<filter id='ds'><feDropShadow dx='0' dy='3' stdDeviation='3' flood-opacity='0.45'/></filter>"
+            + "<path d='M22 0 C9.85 0 0 9.85 0 22 C0 38.5 22 60 22 60 C22 60 44 38.5 44 22 C44 9.85 34.15 0 22 0Z' fill='#EA4335' filter='url(#ds)'/>"
+            + "<circle cx='22' cy='22' r='10' fill='white'/>"
+            + "<circle cx='22' cy='22' r='5' fill='#EA4335'/>"
+            + "</svg>";
+        }
+
+        // Renderizado reactivo de marcadores sin recargar el WebView
+        window.renderPlaces = function(placesData, selectedId) {
+          placesLayer.clearLayers();
+          if (!placesData || placesData.length === 0) return;
+          var coords = [];
+          placesData.forEach(function(p) {
+            var isSel = (p.id === selectedId);
+            var size = isSel ? 44 : 36;
+            var h = isSel ? 60 : 49;
+            var marker = L.marker([p.latitude, p.longitude], {
+              icon: L.divIcon({
+                className: 'custom-marker',
+                html: makePinSVG(p.category, size, isSel),
+                iconSize: [size, h],
+                iconAnchor: [size / 2, h]
+              }),
+              zIndexOffset: isSel ? 1500 : 0
+            });
+            // Al hacer clic, solo se avisa a React Native (sin globito HTML de Leaflet redundante)
+            marker.on('click', function() {
+              window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'markerPress', placeId: p.id }));
+            });
+            placesLayer.addLayer(marker);
+            coords.push([p.latitude, p.longitude]);
+          });
+
+          // Solo encuadra si no hay ruta activa
+          if (routeLayer.getLayers().length === 0 && coords.length > 0) {
+            if (coords.length > 1) {
+              map.flyToBounds(L.latLngBounds(coords), {
+                paddingTopLeft: [100, 40],
+                paddingBottomRight: [40, 40],
+                maxZoom: 16,
+                minZoom: 13,
+                duration: 1.0
+              });
+            } else {
+              map.flyTo(coords[0], 16, { duration: 1.0 });
+            }
+          }
+        };
+
+        // Renderizado reactivo de ruta sin recargar el WebView
+        window.renderRoute = function(routeData, destName) {
+          routeLayer.clearLayers();
+          if (!routeData || !routeData.coordinates || routeData.coordinates.length === 0) return;
+          var coords = routeData.coordinates.map(function(c) { return [c.latitude, c.longitude]; });
+
+          // Halo exterior azul oscuro
+          L.polyline(coords, {
+            color: '#0D47A1',
+            weight: 9,
+            opacity: 0.9,
+            lineCap: 'round',
+            lineJoin: 'round'
+          }).addTo(routeLayer);
+
+          // Línea interior azul Google #1A73E8
+          L.polyline(coords, {
+            color: '#1A73E8',
+            weight: 5,
+            opacity: 1,
+            lineCap: 'round',
+            lineJoin: 'round'
+          }).addTo(routeLayer);
+
+          // Pin de llegada Google Maps
+          var last = coords[coords.length - 1];
+          L.marker(last, {
+            icon: L.divIcon({
+              className: 'dest-marker',
+              html: makeDestPinSVG(),
+              iconSize: [44, 60],
+              iconAnchor: [22, 60]
+            }),
+            zIndexOffset: 2500
+          }).addTo(routeLayer);
+
+          // Auto-encuadre con margen inferior para no tapar con el Bottom Sheet
+          map.fitBounds(L.latLngBounds(coords), {
+            paddingTopLeft: [70, 50],
+            paddingBottomRight: [50, 300],
+            maxZoom: 16,
+            animate: true,
+            duration: 1.0
+          });
+        };
+
+        function zoomIn(e)  { e.preventDefault(); map.zoomIn();  }
+        function zoomOut(e) { e.preventDefault(); map.zoomOut(); }
+
+        // Avisar a React Native que el mapa está listo
+        setTimeout(function() {
+          window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'mapReady' }));
+        }, 150);
       </script>
     </body>
     </html>
@@ -276,32 +288,74 @@ const generateMapHTML = (
 };
 
 // ============================================================
-// Componente principal LeafletMap que renderiza el mapa dentro de un WebView
+// Componente principal LeafletMap
 // ============================================================
-export default function LeafletMap({ userLocation, places, selectedPlace, routeData, onMarkerPress, centerOnUser }: LeafletMapProps) {
+export default function LeafletMap({
+  userLocation,
+  places,
+  selectedPlace,
+  routeData,
+  onMarkerPress,
+  centerOnUser,
+}: LeafletMapProps) {
 
   const webViewRef = useRef<any>(null);
-  const htmlContent = generateMapHTML(userLocation, places, routeData, selectedPlace);
+  const isMapReadyRef = useRef<boolean>(false);
+  const initialHtmlRef = useRef<string>(generateBaseMapHTML(userLocation));
 
-  // ============================================================
-  // Efecto que escucha el contador centerOnUser y vuela de vuelta al GPS del usuario
-  // ============================================================
+  // Sincroniza los marcadores por JavaScript sin recargar el WebView
+  const syncPlaces = () => {
+    if (!isMapReadyRef.current || !webViewRef.current) return;
+    const js = `
+      if (window.renderPlaces) {
+        window.renderPlaces(${JSON.stringify(places)}, ${JSON.stringify(selectedPlace?.id || null)});
+      }
+      true;
+    `;
+    webViewRef.current.injectJavaScript(js);
+  };
+
+  // Sincroniza la ruta por JavaScript sin recargar el WebView
+  const syncRoute = () => {
+    if (!isMapReadyRef.current || !webViewRef.current) return;
+    const js = `
+      if (window.renderRoute) {
+        window.renderRoute(${JSON.stringify(routeData)}, ${JSON.stringify(selectedPlace?.name || 'Destino')});
+      }
+      true;
+    `;
+    webViewRef.current.injectJavaScript(js);
+  };
+
+  useEffect(() => {
+    syncPlaces();
+  }, [places, selectedPlace]);
+
+  useEffect(() => {
+    syncRoute();
+  }, [routeData, selectedPlace]);
+
+  // Escucha el contador de re-centro al usuario
   useEffect(() => {
     if (centerOnUser && centerOnUser > 0 && webViewRef.current) {
       const js = `
-        map.flyTo([${userLocation.latitude}, ${userLocation.longitude}], 15, { duration: 1.0 });
+        if (window.map) {
+          window.map.flyTo([${userLocation.latitude}, ${userLocation.longitude}], 15, { duration: 1.0 });
+        }
         true;
       `;
       webViewRef.current.injectJavaScript(js);
     }
   }, [centerOnUser]);
-  // ============================================================
 
-  // Comunicación WebView -> React Native cuando el usuario toca un marcador
   const handleMessage = (event: any) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
-      if (data.type === 'markerPress') {
+      if (data.type === 'mapReady') {
+        isMapReadyRef.current = true;
+        syncPlaces();
+        syncRoute();
+      } else if (data.type === 'markerPress') {
         onMarkerPress(data.placeId);
       }
     } catch (e) {
@@ -314,16 +368,14 @@ export default function LeafletMap({ userLocation, places, selectedPlace, routeD
       ref={webViewRef}
       style={styles.map}
       originWhitelist={['*']}
-      source={{ html: htmlContent }}
+      source={{ html: initialHtmlRef.current }}
       onMessage={handleMessage}
       javaScriptEnabled={true}
       domStorageEnabled={true}
-      startInLoadingState={true}
       scalesPageToFit={true}
     />
   );
 }
-// ============================================================
 
 const styles = StyleSheet.create({
   map: {

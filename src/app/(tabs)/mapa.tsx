@@ -9,6 +9,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Animated,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,7 +19,6 @@ import { ThemedView } from '@/src/components/themed-view';
 // Componentes del mapa y navegación
 import LeafletMap from '@/src/components/leaflet-map';
 import { SwipeableScreen } from '@/src/components/swipeable-screen';
-import { AppHeader } from '@/src/components/app-header';
 
 // Hooks y tipos de datos
 import { useMaps } from '@/src/hooks/useMaps';
@@ -27,7 +27,7 @@ import { PlaceCategory } from '@/src/servicios/map/type';
 export default function ExploreScreen() {
   const { t } = useTranslation();
 
-  // Parámetros recibidos desde otras pantallas (ej: al tocar una dirección en Inicio)
+  // Parámetros recibidos desde otras pantallas
   const params = useLocalSearchParams() as {
     nombre?: string;
     direccion?: string;
@@ -41,10 +41,12 @@ export default function ExploreScreen() {
   // ============================================================
   const [categoriaSel, setCategoriaSel] = useState<PlaceCategory | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
-  const [showNavAlert, setShowNavAlert] = useState(false);
   const [textoBusqueda, setTextoBusqueda] = useState('');
   const [centrarEnUsuario, setCentrarEnUsuario] = useState(0); // contador para disparar re-center
   const [cardHeight, setCardHeight] = useState(0);
+
+  // Animación slide-up del bottom sheet (estilo Google Maps)
+  const slideAnim = useRef(new Animated.Value(400)).current;
   // ============================================================
 
   // ============================================================
@@ -66,6 +68,27 @@ export default function ExploreScreen() {
     clearPlaces,
     focusOnPlace,
   } = useMaps();
+  // ============================================================
+
+  // ============================================================
+  // Animación de entrada/salida del bottom sheet al aparecer/desaparecer selectedPlace
+  // ============================================================
+  useEffect(() => {
+    if (selectedPlace) {
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        useNativeDriver: true,
+        tension: 65,
+        friction: 11,
+      }).start();
+    } else {
+      Animated.timing(slideAnim, {
+        toValue: 400,
+        duration: 220,
+        useNativeDriver: true,
+      }).start(() => setCardHeight(0));
+    }
+  }, [selectedPlace]);
   // ============================================================
 
   // ============================================================
@@ -95,7 +118,6 @@ export default function ExploreScreen() {
 
   // ============================================================
   // Función para filtrar lugares cuando el usuario toca un cuadro de categoría
-  // Si vuelve a tocar la misma categoría, se deselecciona y se limpian los pines del mapa
   // ============================================================
   const handleFiltro = (cat: PlaceCategory) => {
     if (categoriaSel === cat) {
@@ -130,15 +152,15 @@ export default function ExploreScreen() {
   // ============================================================
 
   // ============================================================
-  // Función  iniciar navegación, ocultar otros lugares 
+  // Función iniciar navegación
   // ============================================================
   const iniciarNavegacion = () => {
     setIsNavigating(true);
-    setShowNavAlert(true);
+  };
 
-    setTimeout(() => {
-      setShowNavAlert(false);
-    }, 10000);
+  const salirNavegacion = () => {
+    setIsNavigating(false);
+    clearSelection();
   };
   // ============================================================
 
@@ -146,10 +168,9 @@ export default function ExploreScreen() {
     <ThemedView style={styles.container}>
       <SwipeableScreen currentTab="mapa">
         <SafeAreaView style={styles.safeArea} edges={['top']}>
-          <AppHeader />
 
           {/* ============================================================ */}
-          {/* Área del mapa: ocupa todo el espacio restante */}
+          {/* Área del mapa a pantalla completa estilo Google Maps */}
           {/* ============================================================ */}
           <View style={styles.mapArea}>
             {errorMsg ? (
@@ -171,25 +192,55 @@ export default function ExploreScreen() {
               />
             ) : (
               <View style={styles.centeredMsg}>
-                <ActivityIndicator size="large" color="#2196F3" />
-                <Text style={{ marginTop: 10, color: '#666' }}>{t('map.searchingGps')}</Text>
+                <ActivityIndicator size="large" color="#1A73E8" />
+                <Text style={{ marginTop: 10, color: '#5F6368', fontWeight: '500' }}>{t('map.searchingGps')}</Text>
               </View>
             )}
 
             {/* ============================================================ */}
-            {/* Barra flotante de búsqueda y filtros (sólo visible fuera de navegación) */}
+            {/* Modo Navegación: Panel superior activo estilo Google Maps */}
+            {/* ============================================================ */}
+            {isNavigating && selectedPlace && (
+              <View style={styles.navTopBar}>
+                <View style={styles.navTopIconContainer}>
+                  <Ionicons name="navigate" size={24} color="#FFFFFF" />
+                </View>
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text style={styles.navTopTitle} numberOfLines={1}>
+                    En ruta a {selectedPlace.name}
+                  </Text>
+                  <Text style={styles.navTopSubtitle} numberOfLines={1}>
+                    {routeData ? `${routeData.distanceKm} km • ${routeData.durationMin} min estimados` : selectedPlace.address}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.navTopCloseBtn}
+                  onPress={salirNavegacion}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="close" size={20} color="#FFFFFF" />
+                </TouchableOpacity>
+              </View>
+            )}
+            {/* ============================================================ */}
+
+            {/* ============================================================ */}
+            {/* Barra flotante de búsqueda y filtros alineada pixel-perfect */}
             {/* ============================================================ */}
             {!isNavigating && (
               <View style={styles.floatingSearchWrapper}>
                 <View style={styles.floatingSearchBar}>
-                  <TouchableOpacity onPress={handleBuscar}>
-                    <Ionicons name="search" size={20} color="#666" style={{ marginRight: 8 }} />
-                  </TouchableOpacity>
+                  {/* Logo sutil PaseAR como ícono de app */}
+                  <Image
+                    source={require('@/assets/images/logos/logoapp.png')}
+                    style={styles.appLogoMini}
+                    resizeMode="contain"
+                  />
 
                   <TextInput
-                    style={{ flex: 1, color: '#1A202C', fontSize: 14, paddingVertical: 0 }}
-                    placeholder={t('map.searchPlaceholder')}
-                    placeholderTextColor="#718096"
+                    style={styles.searchInput}
+                    placeholder="Buscar en PaseAR o Pilar..."
+                    placeholderTextColor="#70757A"
                     value={textoBusqueda}
                     onChangeText={setTextoBusqueda}
                     onSubmitEditing={handleBuscar}
@@ -197,44 +248,125 @@ export default function ExploreScreen() {
                   />
 
                   {textoBusqueda.length > 0 && (
-                    <TouchableOpacity onPress={() => {
-                      setTextoBusqueda('');
-                      if (categoriaSel) {
-                        loadPlaces(categoriaSel);
-                      } else {
-                        clearPlaces();
-                      }
-                    }}>
-                      <Ionicons name="close-circle" size={18} color="#999" />
+                    <TouchableOpacity
+                      onPress={() => {
+                        setTextoBusqueda('');
+                        if (categoriaSel) {
+                          loadPlaces(categoriaSel);
+                        } else {
+                          clearPlaces();
+                        }
+                      }}
+                      style={{ padding: 4 }}
+                    >
+                      <Ionicons name="close-circle" size={18} color="#9AA0A6" />
                     </TouchableOpacity>
                   )}
 
-                  {loading && <ActivityIndicator size="small" color="#2196F3" style={{ marginLeft: 6 }} />}
+                  {loading ? (
+                    <ActivityIndicator size="small" color="#1A73E8" style={{ marginLeft: 6 }} />
+                  ) : (
+                    <TouchableOpacity onPress={handleBuscar} style={{ padding: 4 }}>
+                      <Ionicons name="search" size={20} color="#1A73E8" />
+                    </TouchableOpacity>
+                  )}
                 </View>
 
+                {/*  categorías con íconos vectoriales delgados */}
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   style={styles.filtrosContainer}
-                  contentContainerStyle={{ paddingHorizontal: 2 }}
+                  contentContainerStyle={styles.filtrosContent}
                 >
-                  <TouchableOpacity style={[styles.chip, categoriaSel === 'all' && styles.chipActivo]} onPress={() => handleFiltro('all')}>
-                    <Text style={[styles.chipText, categoriaSel === 'all' && styles.chipTextActivo]}>🗺️ {t('map.categories.all')}</Text>
+                  <TouchableOpacity
+                    style={[styles.chip, categoriaSel === 'all' && styles.chipActivo]}
+                    onPress={() => handleFiltro('all')}
+                  >
+                    <Ionicons
+                      name="compass-outline"
+                      size={15}
+                      color={categoriaSel === 'all' ? '#FFFFFF' : '#1A73E8'}
+                      style={{ marginRight: 6 }}
+                    />
+                    <Text style={[styles.chipText, categoriaSel === 'all' && styles.chipTextActivo]}>
+                      {t('map.categories.all')}
+                    </Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={[styles.chip, categoriaSel === 'hospital' && styles.chipActivo]} onPress={() => handleFiltro('hospital')}>
-                    <Text style={[styles.chipText, categoriaSel === 'hospital' && styles.chipTextActivo]}>🏥 {t('map.categories.hospital')}</Text>
+
+                  <TouchableOpacity
+                    style={[styles.chip, categoriaSel === 'hospital' && styles.chipActivo]}
+                    onPress={() => handleFiltro('hospital')}
+                  >
+                    <Ionicons
+                      name="medkit-outline"
+                      size={15}
+                      color={categoriaSel === 'hospital' ? '#FFFFFF' : '#E53935'}
+                      style={{ marginRight: 6 }}
+                    />
+                    <Text style={[styles.chipText, categoriaSel === 'hospital' && styles.chipTextActivo]}>
+                      {t('map.categories.hospital')}
+                    </Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={[styles.chip, categoriaSel === 'police' && styles.chipActivo]} onPress={() => handleFiltro('police')}>
-                    <Text style={[styles.chipText, categoriaSel === 'police' && styles.chipTextActivo]}>👮 {t('map.categories.police')}</Text>
+
+                  <TouchableOpacity
+                    style={[styles.chip, categoriaSel === 'police' && styles.chipActivo]}
+                    onPress={() => handleFiltro('police')}
+                  >
+                    <Ionicons
+                      name="shield-checkmark-outline"
+                      size={15}
+                      color={categoriaSel === 'police' ? '#FFFFFF' : '#1E88E5'}
+                      style={{ marginRight: 6 }}
+                    />
+                    <Text style={[styles.chipText, categoriaSel === 'police' && styles.chipTextActivo]}>
+                      {t('map.categories.police')}
+                    </Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={[styles.chip, categoriaSel === 'supermarket' && styles.chipActivo]} onPress={() => handleFiltro('supermarket')}>
-                    <Text style={[styles.chipText, categoriaSel === 'supermarket' && styles.chipTextActivo]}>🛒 {t('map.categories.supermarket')}</Text>
+
+                  <TouchableOpacity
+                    style={[styles.chip, categoriaSel === 'supermarket' && styles.chipActivo]}
+                    onPress={() => handleFiltro('supermarket')}
+                  >
+                    <Ionicons
+                      name="cart-outline"
+                      size={15}
+                      color={categoriaSel === 'supermarket' ? '#FFFFFF' : '#43A047'}
+                      style={{ marginRight: 6 }}
+                    />
+                    <Text style={[styles.chipText, categoriaSel === 'supermarket' && styles.chipTextActivo]}>
+                      {t('map.categories.supermarket')}
+                    </Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={[styles.chip, categoriaSel === 'restaurant' && styles.chipActivo]} onPress={() => handleFiltro('restaurant')}>
-                    <Text style={[styles.chipText, categoriaSel === 'restaurant' && styles.chipTextActivo]}>🍽️ {t('map.categories.restaurant')}</Text>
+
+                  <TouchableOpacity
+                    style={[styles.chip, categoriaSel === 'restaurant' && styles.chipActivo]}
+                    onPress={() => handleFiltro('restaurant')}
+                  >
+                    <Ionicons
+                      name="restaurant-outline"
+                      size={15}
+                      color={categoriaSel === 'restaurant' ? '#FFFFFF' : '#FB8C00'}
+                      style={{ marginRight: 6 }}
+                    />
+                    <Text style={[styles.chipText, categoriaSel === 'restaurant' && styles.chipTextActivo]}>
+                      {t('map.categories.restaurant')}
+                    </Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={[styles.chip, categoriaSel === 'park' && styles.chipActivo]} onPress={() => handleFiltro('park')}>
-                    <Text style={[styles.chipText, categoriaSel === 'park' && styles.chipTextActivo]}>🌳 {t('map.categories.park')}</Text>
+
+                  <TouchableOpacity
+                    style={[styles.chip, categoriaSel === 'park' && styles.chipActivo]}
+                    onPress={() => handleFiltro('park')}
+                  >
+                    <Ionicons
+                      name="leaf-outline"
+                      size={15}
+                      color={categoriaSel === 'park' ? '#FFFFFF' : '#4CAF50'}
+                      style={{ marginRight: 6 }}
+                    />
+                    <Text style={[styles.chipText, categoriaSel === 'park' && styles.chipTextActivo]}>
+                      {t('map.categories.park')}
+                    </Text>
                   </TouchableOpacity>
                 </ScrollView>
               </View>
@@ -242,8 +374,8 @@ export default function ExploreScreen() {
             {/* ============================================================ */}
 
             {/* ============================================================ */}
-            {/* Botón flotante circular "Mi Ubicación" (estilo Google Maps) */}
-            {/* Ubicado por encima del botón de la IA y adaptado a la tarjeta inferior */}
+            {/* Botón flotante circular "Mi Ubicación" */}
+            {/* Posicionado a 175px (o sobre la tarjeta) para no solapar el botón de IA */}
             {/* ============================================================ */}
             {!isNavigating && (
               <TouchableOpacity
@@ -254,7 +386,7 @@ export default function ExploreScreen() {
                 onPress={() => setCentrarEnUsuario(n => n + 1)}
                 activeOpacity={0.8}
               >
-                <Ionicons name="locate" size={22} color="#2196F3" />
+                <Ionicons name="locate" size={22} color="#1A73E8" />
               </TouchableOpacity>
             )}
             {/* ============================================================ */}
@@ -263,41 +395,47 @@ export default function ExploreScreen() {
           {/* ============================================================ */}
 
           {/* ============================================================ */}
-          {/* TARJETA INFERIOR estilo Material Design / Google Maps Bottom Sheet */}
-          {/* Se oculta automáticamente cuando inicia la navegación */}
+          {/* TARJETA INFERIOR estilo Google Maps Bottom Sheet */}
           {/* ============================================================ */}
           {selectedPlace && !isNavigating && (
-            <View
-              style={styles.cardInfo}
-              onLayout={(e) => {
+            <Animated.View
+              style={[
+                styles.cardInfo,
+                { transform: [{ translateY: slideAnim }] },
+              ]}
+              onLayout={(e: any) => {
                 const h = e.nativeEvent.layout.height;
                 if (h > 0) setCardHeight(h);
               }}
             >
-
-              {/* Barrita de arrastre (drag handle) estilo Material Design */}
+              {/* Barrita de arrastre sutil estilo Material Design */}
               <View style={styles.dragHandle} />
 
-              {/* Cabecera: nombre del lugar y botón de cierre */}
+              {/* Cabecera: nombre del lugar y botón de cierre moderno */}
               <View style={styles.cardHeader}>
-                <View style={{ flex: 1 }}>
+                <View style={{ flex: 1, paddingRight: 8 }}>
                   <Text style={styles.cardTitle}>{selectedPlace.name}</Text>
-                  <Text style={styles.cardAddress} numberOfLines={2}>📍 {selectedPlace.address}</Text>
+                  <View style={styles.addressRow}>
+                    <Ionicons name="location-sharp" size={14} color="#EA4335" style={{ marginRight: 4, marginTop: 2 }} />
+                    <Text style={styles.cardAddress} numberOfLines={2}>{selectedPlace.address}</Text>
+                  </View>
                 </View>
-                <TouchableOpacity style={styles.closeCardButton} onPress={clearSelection}>
-                  <Ionicons name="close-circle" size={26} color="#BDBDBD" />
+                <TouchableOpacity
+                  style={styles.closeCardButton}
+                  onPress={clearSelection}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="close" size={18} color="#5F6368" />
                 </TouchableOpacity>
               </View>
 
-              {/* ============================================================ */}
-              {/* Selector de transporte rediseñado: icono + etiqueta + tiempo estimado */}
-              {/* ============================================================ */}
+              {/* Selector de modo de transporte */}
               <View style={styles.transportSelector}>
                 <TouchableOpacity
                   style={[styles.transportBtn, transportMode === 'driving' && styles.transportBtnActive]}
                   onPress={() => changeTransportMode('driving')}
                 >
-                  <Ionicons name="car" size={20} color={transportMode === 'driving' ? '#1A73E8' : '#9E9E9E'} />
+                  <Ionicons name="car" size={19} color={transportMode === 'driving' ? '#1A73E8' : '#70757A'} />
                   <Text style={[styles.transportBtnText, transportMode === 'driving' && styles.transportBtnTextActive]}>
                     {t('map.transport.car')}
                   </Text>
@@ -310,7 +448,7 @@ export default function ExploreScreen() {
                   style={[styles.transportBtn, transportMode === 'foot' && styles.transportBtnActive]}
                   onPress={() => changeTransportMode('foot')}
                 >
-                  <Ionicons name="walk" size={20} color={transportMode === 'foot' ? '#1A73E8' : '#9E9E9E'} />
+                  <Ionicons name="walk" size={19} color={transportMode === 'foot' ? '#1A73E8' : '#70757A'} />
                   <Text style={[styles.transportBtnText, transportMode === 'foot' && styles.transportBtnTextActive]}>
                     {t('map.transport.walk')}
                   </Text>
@@ -323,7 +461,7 @@ export default function ExploreScreen() {
                   style={[styles.transportBtn, transportMode === 'bike' && styles.transportBtnActive]}
                   onPress={() => changeTransportMode('bike')}
                 >
-                  <Ionicons name="bicycle" size={20} color={transportMode === 'bike' ? '#1A73E8' : '#9E9E9E'} />
+                  <Ionicons name="bicycle" size={19} color={transportMode === 'bike' ? '#1A73E8' : '#70757A'} />
                   <Text style={[styles.transportBtnText, transportMode === 'bike' && styles.transportBtnTextActive]}>
                     {t('map.transport.bike')}
                   </Text>
@@ -332,9 +470,8 @@ export default function ExploreScreen() {
                   )}
                 </TouchableOpacity>
               </View>
-              {/* ============================================================ */}
 
-              {/* Métricas: distancia y tiempo en grande */}
+              {/* Métricas estimadas de distancia y tiempo */}
               {routeData ? (
                 <View style={styles.metricsRow}>
                   <View style={styles.metricItem}>
@@ -350,37 +487,34 @@ export default function ExploreScreen() {
               ) : (
                 <View style={styles.metricsRow}>
                   <ActivityIndicator size="small" color="#1A73E8" />
-                  <Text style={{ marginLeft: 10, color: '#A0AEC0' }}>{t('map.calculatingRoute')}</Text>
+                  <Text style={{ marginLeft: 10, color: '#70757A', fontSize: 13 }}>{t('map.calculatingRoute')}</Text>
                 </View>
               )}
 
-              {/* Botón Google azul (#1A73E8) con sombra de elevación */}
+              {/* Botón Iniciar Navegación estilo Google Maps */}
               <TouchableOpacity
                 style={styles.btnNavegar}
                 onPress={iniciarNavegacion}
                 activeOpacity={0.85}
               >
-                <Ionicons name="navigate" size={20} color="#FFF" style={{ marginRight: 8 }} />
+                <Ionicons name="navigate" size={19} color="#FFF" style={{ marginRight: 8 }} />
                 <Text style={styles.btnPrimaryText}>{t('map.startNavigation')}</Text>
               </TouchableOpacity>
-
-            </View>
+            </Animated.View>
           )}
           {/* ============================================================ */}
 
           {/* ============================================================ */}
-          {/* Botón para finalizar navegación y restaurar los lugares */}
+          {/* Botón flotante para finalizar navegación */}
           {/* ============================================================ */}
           {isNavigating && (
             <TouchableOpacity
               style={styles.btnSalirNav}
-              onPress={() => {
-                setIsNavigating(false);
-                clearSelection();
-              }}
+              onPress={salirNavegacion}
+              activeOpacity={0.85}
             >
-              <Ionicons name="stop-circle" size={20} color="#FFF" style={{ marginRight: 6 }} />
-              <Text style={{ color: '#FFF', fontWeight: 'bold' }}>{t('map.endNavigation')}</Text>
+              <Ionicons name="close-circle" size={20} color="#FFF" style={{ marginRight: 6 }} />
+              <Text style={{ color: '#FFF', fontWeight: 'bold', fontSize: 14 }}>{t('map.endNavigation')}</Text>
             </TouchableOpacity>
           )}
           {/* ============================================================ */}
@@ -391,84 +525,162 @@ export default function ExploreScreen() {
   );
 }
 
-// ============================================================
-// Estilos del componente Mapa y de sus elementos flotantes
-// ============================================================
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F7FA' },
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
   safeArea: { flex: 1 },
   mapArea: { flex: 1, position: 'relative' },
   centeredMsg: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
 
   // ============================================================
-  // Estilos de la barra flotante de búsqueda y filtros
+  // Modo Navegación: Barra superior verde esmeralda estilo Google Maps
+  // ============================================================
+  navTopBar: {
+    position: 'absolute',
+    top: 10,
+    left: 14,
+    right: 14,
+    backgroundColor: '#0F9D58', // Verde Google Maps navegación
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    zIndex: 60,
+  },
+  navTopIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  navTopTitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  navTopSubtitle: {
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 13,
+    marginTop: 2,
+  },
+  navTopCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+
+  // ============================================================
+  // Barra flotante de búsqueda y filtros alineada
   // ============================================================
   floatingSearchWrapper: {
     position: 'absolute',
-    top: 12,
-    left: 12,
-    right: 12,
+    top: 10,
+    left: 0,
+    right: 0,
     zIndex: 50,
   },
   floatingSearchBar: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    borderRadius: 28,
+    marginHorizontal: 14,
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 9,
     elevation: 6,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 6,
     marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#E8EAED',
   },
-  filtrosContainer: { flexDirection: 'row' },
-  chip: {
-    backgroundColor: 'rgba(255,255,255,0.92)',
-    borderRadius: 20,
+  appLogoMini: {
+    width: 28,
+    height: 28,
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    color: '#202124',
+    fontSize: 15,
+    paddingVertical: 0,
+  },
+  filtrosContainer: {
+    flexDirection: 'row',
+  },
+  filtrosContent: {
     paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingBottom: 4,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
     marginRight: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    elevation: 3,
+    borderColor: '#DADCE0',
+    elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.12,
-    shadowRadius: 3,
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
   },
-  chipActivo: { backgroundColor: '#2196F3', borderColor: '#2196F3' },
-  chipText: { fontSize: 13, fontWeight: '600', color: '#4A5568' },
-  chipTextActivo: { color: '#FFFFFF' },
-  // ============================================================
+  chipActivo: {
+    backgroundColor: '#1A73E8',
+    borderColor: '#1A73E8',
+  },
+  chipText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#3C4043',
+  },
+  chipTextActivo: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
 
   // ============================================================
-  // Botón circular flotante "Mi Ubicación" (estilo Google Maps)
-  // Ubicado a la derecha, por encima del botón flotante de la IA
+  // Botón circular flotante "Mi Ubicación"
+  // Separado verticalmente para no superponerse con el FAB de la IA
   // ============================================================
   btnMiUbicacion: {
     position: 'absolute',
-    bottom: 96,
-    right: 28,
+    bottom: 175,
+    right: 20,
     width: 48,
     height: 48,
     borderRadius: 24,
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 20,
+    elevation: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.22,
     shadowRadius: 5,
-    zIndex: 50,
+    zIndex: 40,
+    borderWidth: 1,
+    borderColor: '#E8EAED',
   },
-  // ============================================================
 
   // ============================================================
-  // Bottom Sheet estilo Material Design / Google Maps
+  // Bottom Sheet estilo Google Maps
   // ============================================================
   cardInfo: {
     position: 'absolute',
@@ -476,24 +688,26 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     paddingHorizontal: 20,
-    paddingBottom: 24,
-    paddingTop: 10,
+    paddingBottom: 20,
+    paddingTop: 8,
     elevation: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -5 },
-    shadowOpacity: 0.18,
-    shadowRadius: 12,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.16,
+    shadowRadius: 10,
+    borderWidth: 1,
+    borderColor: '#F1F3F4',
   },
   dragHandle: {
-    width: 40,
+    width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: '#DADCE0',
     alignSelf: 'center',
-    marginBottom: 14,
+    marginBottom: 12,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -501,114 +715,133 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 4,
   },
-  cardTitle: { fontSize: 18, fontWeight: '700', color: '#202124', letterSpacing: 0.1 },
-  cardAddress: { fontSize: 13, color: '#5F6368', marginTop: 3, lineHeight: 18 },
-  closeCardButton: { padding: 2, marginLeft: 8 },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#202124',
+    letterSpacing: 0.1,
+  },
+  addressRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 4,
+  },
+  cardAddress: {
+    fontSize: 13,
+    color: '#5F6368',
+    lineHeight: 18,
+    flex: 1,
+  },
+  closeCardButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F1F3F4',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
   metricsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
     backgroundColor: '#F8F9FA',
-    borderRadius: 16,
-    paddingVertical: 14,
-    marginVertical: 12,
+    borderRadius: 14,
+    paddingVertical: 12,
+    marginVertical: 10,
     borderWidth: 1,
-    borderColor: '#EEEEEE',
+    borderColor: '#E8EAED',
   },
   metricItem: { alignItems: 'center' },
-  metricBigValue: { fontSize: 22, fontWeight: '700', color: '#1A73E8' },
-  metricValue: { fontSize: 14, fontWeight: 'bold', color: '#2D3748', marginTop: 2 },
-  metricLabel: { fontSize: 11, color: '#9E9E9E', marginTop: 2 },
-  metricDivider: { width: 1, height: 32, backgroundColor: '#E0E0E0' },
-  // ============================================================
+  metricBigValue: { fontSize: 20, fontWeight: '700', color: '#1A73E8' },
+  metricLabel: { fontSize: 11, color: '#70757A', marginTop: 2 },
+  metricDivider: { width: 1, height: 28, backgroundColor: '#DADCE0' },
 
   // ============================================================
-  // Selector de transporte rediseñado: fondo sutil, botón activo azul Google
+  // Selector de transporte estilo Google Maps
   // ============================================================
   transportSelector: {
     flexDirection: 'row',
     backgroundColor: '#F1F3F4',
-    borderRadius: 14,
-    padding: 4,
-    marginTop: 14,
-    marginBottom: 2,
+    borderRadius: 12,
+    padding: 3,
+    marginTop: 10,
   },
   transportBtn: {
     flex: 1,
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
-    borderRadius: 10,
-    gap: 2,
+    paddingVertical: 7,
+    borderRadius: 9,
   },
   transportBtnActive: {
-    backgroundColor: '#E8F0FE',
-    elevation: 0,
+    backgroundColor: '#FFFFFF',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   transportBtnText: {
     fontSize: 11,
-    fontWeight: '600',
-    color: '#9E9E9E',
+    fontWeight: '500',
+    color: '#70757A',
     marginTop: 2,
   },
-  transportBtnTextActive: { color: '#1A73E8' },
+  transportBtnTextActive: {
+    color: '#1A73E8',
+    fontWeight: '700',
+  },
   transportBtnTime: {
     fontSize: 10,
     fontWeight: '700',
     color: '#1A73E8',
-    backgroundColor: '#C5D9FB',
+    backgroundColor: '#E8F0FE',
     borderRadius: 6,
-    paddingHorizontal: 5,
+    paddingHorizontal: 6,
     paddingVertical: 1,
-    marginTop: 2,
+    marginTop: 3,
     overflow: 'hidden',
   },
-  // ============================================================
 
   // ============================================================
-  // Botón de navegación azul Google (#1A73E8) con elevación y sombra
+  // Botón Iniciar Navegación
   // ============================================================
   btnNavegar: {
     backgroundColor: '#1A73E8',
-    borderRadius: 14,
-    paddingVertical: 15,
+    borderRadius: 24,
+    paddingVertical: 13,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 4,
     elevation: 4,
     shadowColor: '#1A73E8',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.35,
-    shadowRadius: 8,
+    shadowRadius: 6,
   },
-  btnSuccess: {
-    backgroundColor: '#1A73E8',
-    borderRadius: 14,
-    paddingVertical: 15,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 4,
-    elevation: 4,
-    shadowColor: '#1A73E8',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
+  btnPrimaryText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: 0.2,
   },
-  btnPrimaryText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700', letterSpacing: 0.3 },
+
+  // ============================================================
+  // Botón Salir de Navegación
   // ============================================================
   btnSalirNav: {
     position: 'absolute',
     bottom: 24,
     alignSelf: 'center',
-    backgroundColor: '#E53935',
+    backgroundColor: '#D93025', // Rojo Google
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 22,
     paddingVertical: 12,
-    borderRadius: 30,
+    borderRadius: 28,
     elevation: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
@@ -617,4 +850,3 @@ const styles = StyleSheet.create({
     zIndex: 100,
   },
 });
-// ============================================================
