@@ -146,13 +146,13 @@ const LugaresIniciales = () => {
       >
         <SeccionLugares
           coleccion="lugares historicos"
-          titulo={t('home.historicPlaces', 'Lugares históricos locales')}
+          titulo={t('home.historicPlaces', 'Lugares históricos locales:')}
           onSeleccionar={setLugarSeleccionado}
         />
 
         <SeccionLugares
           coleccion="lugares populares"
-          titulo={t('home.popularPlaces', 'Lugares populares')}
+          titulo={t('home.popularPlaces', 'Lugares populares locales:')}
           onSeleccionar={setLugarSeleccionado}
         />
       </ScrollView>
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
     padding: 15, //espacio interno de la tarjeta
     borderRadius: 8, //bordes redondeados
     marginRight: 12, //espacio entre tarjetas
-    width: width * 0.30, //cada tarjeta ocupa el 30% del ancho de la pantalla
+    width: width * 0.50, //cada tarjeta ocupa el 50% del ancho de la pantalla
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },

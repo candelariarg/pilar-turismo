@@ -1,5 +1,4 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { ThemedView } from '@/src/components/themed-view';
 import { SwipeableScreen } from '@/src/components/swipeable-screen';
 import LugaresIniciales from '@/src/menu_scroll/listaLugares';
