@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import {Text,ActivityIndicator,StyleSheet,View,ScrollView,} from 'react-native';
+import {Text,ActivityIndicator,StyleSheet,View,ScrollView,TouchableOpacity,Modal,} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppHeader } from '@/src/components/app-header';
-// INTERFACES DE TYPESCRIPT
-//Definen la estructura exacta de los datos para evitar errores de tipo
+import { Ionicons } from '@expo/vector-icons';
+
+
 interface PronosticoHora {
   hora: string;
   temp: number;
@@ -17,6 +18,17 @@ interface PronosticoDia {
   estadoTexto: string;
 }
 
+interface RecomendacionDia {
+  tipo: 'soleado' | 'nublado' | 'lluvioso';
+  tituloPrincipal: string;
+  subtitulo: string;
+  actividades: {
+    titulo: string;
+    descripcion: string;
+    lugar: string;
+  }[];
+}
+
 interface ClimaData {
   temperatura: number;
   sensacion: number;
@@ -25,23 +37,98 @@ interface ClimaData {
   viento: number;
   horas: PronosticoHora[];
   dias: PronosticoDia[];
+  recomendacion: RecomendacionDia;
 }
 
 export default function ClimaScreen() {
-  // Estado principal del clima y del indicador de carga (spinner)
   const [clima, setClima] = useState<ClimaData | null>(null);
   const [cargando, setCargando] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
 
-  // Coordenadas geográficas fijas del Partido de Pilar
   const latitud = -34.2728;
   const longitud = -58.9142;
 
-  // Ejecuta la petición del clima al montar el componente por primera vez
   useEffect(() => {
     obtenerClimaCompleto();
   }, []);
 
-  // Función principal para consultar la API de Open-Meteo
+  // Recomendaciones atractivas orientadas al turismo con los lugares de Pilar
+  const generarRecomendaciones = (
+    probLluvia: number,
+    codigoWmo: number
+  ): RecomendacionDia => {
+    const estaLloviendo = codigoWmo >= 51 && codigoWmo <= 99;
+    const estaNublado = [1, 2, 3, 45, 48].includes(codigoWmo);
+
+    if (estaLloviendo) {
+      return {
+        tipo: 'lluvioso',
+        tituloPrincipal: 'Guía para días de lluvia en Pilar.',
+        subtitulo: 'El clima marca precipitaciones y es ideal para disfrutar de actividades bajo techo.',
+        actividades: [
+          {
+            titulo: 'Tarde de compras y entretenimiento',
+            descripcion: 'Recorré las tiendas cubiertas, el patio de comidas y locales.',
+            lugar: 'Las Palmas del Pilar / Torres del Sol',
+          },
+          {
+            titulo: 'Arte, cultura y diversión',
+            descripcion: 'Disfrute de producciones teatrales memorables o de entretenimiento y opciones gastronómicas en un ambiente cerrado.',
+            lugar: 'Teatro Gran Pilar / Bingo Oasis',
+          },
+          {
+            titulo: 'Paseo comercial y gastronómico',
+            descripcion: 'Un entorno abierto pero resguardado, ideal para cafeterías y boutiques.',
+            lugar: 'Complejo Colonial / La Aldea',
+          },
+        ],
+      };
+    }
+
+    if (estaNublado || probLluvia > 50) {
+      return {
+        tipo: 'nublado',
+        tituloPrincipal: 'Guía para días nublados en Pilar.',
+        subtitulo: 'Un clima fresco y relajado, ideal para paseos tranquilos y disfrutar de la gastronomía local.',
+        actividades: [
+          {
+            titulo: 'Paseo comercial al aire libre',
+            descripcion: 'Disfrutá de una caminata tranquila entre locales comerciales, diseño y excelente gastronomía.',
+            lugar: 'Paseo Champagnat',
+          },
+          {
+            titulo: 'Gastronomía y momentos únicos',
+            descripcion: 'Un punto de encuentro clásico para saborear un buen café y conectar con la esencia de Pilar.',
+            lugar: 'La Aldea / Complejo Colonial',
+          },
+        ],
+      };
+    }
+
+    return {
+      tipo: 'soleado',
+      tituloPrincipal: 'Guía para días soleados en Pilar.',
+      subtitulo: 'Aprovecha al maximo el clima y disfruta de actividades al aire libre.',
+      actividades: [
+        {
+          titulo: 'Historia y corazón de la ciudad',
+          descripcion: 'Recorré el pulmón histórico de Pilar, rodeado de centenarios árboles, arquitectura colonial y propuestas cercanas.',
+          lugar: 'Plaza 12 de Octubre',
+        },
+        {
+          titulo: 'Conexión plena con la naturaleza',
+          descripcion: 'Ideal para caminatas, avistaje de aves y respirar aire puro en un entorno natural protegido.',
+          lugar: 'Reserva Natural de Pilar',
+        },
+        {
+          titulo: 'Paseo y relax al aire libre',
+          descripcion: 'Disfrutá de espacios abiertos, arquitectura moderna y propuestas gastronómicas exclusivas para almorzar o merendar.',
+          lugar: 'Lions 1987 / Paseo Champagnat',
+        },
+      ],
+    };
+  };
+
   const obtenerClimaCompleto = async () => {
     try {
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitud}&longitude=${longitud}&current=temperature_2m,apparent_temperature,wind_speed_10m&hourly=temperature_2m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=auto`;
@@ -49,16 +136,12 @@ export default function ClimaScreen() {
       const datos = await respuesta.json();
 
       if (datos.current && datos.hourly && datos.daily) {
-        // Filtrar las próximas 7 horas a partir de la hora actual
         const horaActualIdx = new Date().getHours();
         const proximasHoras: PronosticoHora[] = [];
         for (let i = horaActualIdx; i < horaActualIdx + 7; i++) {
           if (datos.hourly.time[i]) {
             const fechaHora = new Date(datos.hourly.time[i]);
-            const horaStr = `${fechaHora
-              .getHours()
-              .toString()
-              .padStart(2, '0')}:00`;
+            const horaStr = `${fechaHora.getHours().toString().padStart(2, '0')}:00`;
             proximasHoras.push({
               hora: horaStr,
               temp: Math.round(datos.hourly.temperature_2m[i]),
@@ -66,7 +149,6 @@ export default function ClimaScreen() {
           }
         }
 
-        // Función helper para traducir los códigos WMO de la API a texto en español
         const obtenerTextoEstado = (codigo: number, probLluvia: number): string => {
           if (codigo >= 51 && codigo <= 99) return `Lluvia ${probLluvia}%`;
           if (probLluvia > 60) return `Lluvia ${probLluvia}%`;
@@ -77,11 +159,11 @@ export default function ClimaScreen() {
           return 'Soleado';
         };
 
-        //  Mapear y formatear los días de la semana (semana completa)
         const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
         const proximosDias: PronosticoDia[] = datos.daily.time.map(
           (fechaStr: string, idx: number) => {
-            const d = new Date(`${fechaStr}T00:00:00`);
+            const [year, month, day] = fechaStr.split('-').map(Number);
+            const d = new Date(year, month - 1, day);
             const prob = datos.daily.precipitation_probability_max[idx] || 0;
             const codigo = datos.daily.weather_code[idx] || 0;
 
@@ -95,7 +177,11 @@ export default function ClimaScreen() {
           }
         );
 
-        // Actualizar el estado con toda la información
+        const recomendacion = generarRecomendaciones(
+          datos.daily.precipitation_probability_max[0] ?? 0,
+          datos.daily.weather_code[0] ?? 0
+        );
+
         setClima({
           temperatura: Math.round(datos.current.temperature_2m),
           sensacion: Math.round(datos.current.apparent_temperature),
@@ -104,6 +190,7 @@ export default function ClimaScreen() {
           viento: Math.round(datos.current.wind_speed_10m),
           horas: proximasHoras,
           dias: proximosDias,
+          recomendacion: recomendacion,
         });
       }
     } catch (error) {
@@ -117,19 +204,27 @@ export default function ClimaScreen() {
     <View style={styles.mainContainer}>
       <SafeAreaView style={styles.safeArea}>
         <AppHeader />
+        
+        <TouchableOpacity
+         style={styles.botonRecomendaciones}
+         onPress={() => setModalVisible(true)}
+          >
+         {/* Ícono de destellos / varita mágica */}
+         <Ionicons name="map" size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
+  
+         <Text style={styles.textoBoton}>Ver recomendaciones para hoy</Text>
+        </TouchableOpacity>
         {cargando ? (
-          // Vista de carga mientras responde la API
           <View style={styles.loaderContainer}>
-            <ActivityIndicator size="large" color="#FFFFFF" />
+            <ActivityIndicator size="large" color="#1b7ed4" />
           </View>
         ) : (
-          // Contenido principal desplegable
           <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
           >
-            {/* Cabecera de Pilar y temperatura actual */}
-            <View style={styles.header}>
+            {/* Cabecera con fondo azul y textos blancos */}
+            <View style={styles.headerCard}>
               <View style={styles.badgePilar}>
                 <Text style={styles.badgeTexto}>PaseAR</Text>
               </View>
@@ -147,7 +242,7 @@ export default function ClimaScreen() {
               )}
             </View>
 
-            {/* Pronóstico por hora (horizontal) */}
+            {/* Pronóstico por hora */}
             <View style={styles.cardSection}>
               <Text style={styles.sectionTitle}>PRONÓSTICO POR HORA</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -162,7 +257,7 @@ export default function ClimaScreen() {
               </ScrollView>
             </View>
 
-            {/* Pronóstico semanal de 7 Días */}
+            {/* Pronóstico de 7 Días */}
             <View style={styles.cardSection}>
               <Text style={styles.sectionTitle}>PRONÓSTICO DE 7 DÍAS</Text>
               {clima?.dias.map((item, index) => (
@@ -187,7 +282,7 @@ export default function ClimaScreen() {
               ))}
             </View>
 
-            {/* Métricas adicionales (Viento y Sensación Térmica) */}
+            {/* Información adicional */}
             <View style={styles.cardSection}>
               <Text style={styles.sectionTitle}>INFORMACIÓN ADICIONAL</Text>
               <View style={styles.detallesGrid}>
@@ -203,16 +298,67 @@ export default function ClimaScreen() {
             </View>
           </ScrollView>
         )}
+
+        {/* Modal de Recomendaciones */}
+        <Modal
+          animationType="slide"
+          transparent={false}
+          visible={modalVisible}
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <SafeAreaView style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitulo}>Recomendaciones</Text>
+            </View>
+
+            <ScrollView contentContainerStyle={styles.modalContenido}>
+              {clima?.recomendacion && (
+                <>
+                  <Text style={styles.tituloPrincipal}>
+                    {clima.recomendacion.tituloPrincipal}
+                  </Text>
+
+                  <Text style={styles.subtituloModal}>
+                    {clima.recomendacion.subtitulo}
+                  </Text>
+
+                  {clima.recomendacion.actividades.map((actividad, index) => (
+                    <View key={index} style={styles.actividadCard}>
+                      <Text style={styles.actividadLugar}>
+                         {actividad.lugar}
+                      </Text>
+                      <Text style={styles.actividadTitulo}>
+                        {actividad.titulo}
+                      </Text>
+                      <Text style={styles.actividadDescripcion}>
+                        {actividad.descripcion}
+                      </Text>
+                    </View>
+                  ))}
+                </>
+              )}
+
+              {/* Botón de cerrar ubicado abajo  */}
+              <TouchableOpacity
+                style={styles.botonCerrarInferior}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.textoBotonCerrar}>Cerrar</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </SafeAreaView>
+        </Modal>
+
       </SafeAreaView>
     </View>
   );
 }
 
-// ESTILOS
+// ESTILOS CON FONDO BLANCO Y TARJETAS AZULES
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    backgroundColor: '#1E88E5', 
+    backgroundColor: '#FFFFFF', // Fondo general blanco
   },
   safeArea: {
     flex: 1,
@@ -226,9 +372,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 30,
   },
-  header: {
+  headerCard: {
     alignItems: 'center',
-    marginVertical: 16,
+    backgroundColor: '#1E88E5', // Tarjeta principal azul corporativo
+    borderRadius: 20,
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+    marginVertical: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   badgePilar: {
     backgroundColor: 'rgba(255, 255, 255, 0.25)',
@@ -260,15 +415,21 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.9)',
   },
   cardSection: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)', 
+    backgroundColor: '#1E88E5', // Fondo azul para Pronóstico por hora y 7 días
     borderRadius: 20,
     padding: 16,
     marginBottom: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   sectionTitle: {
     fontSize: 11,
     fontWeight: '800',
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: '#FFFFFF', // Blanco para que resalte sobre el fondo azul
     marginBottom: 12,
     letterSpacing: 0.8,
   },
@@ -283,13 +444,13 @@ const styles = StyleSheet.create({
   },
   horaTexto: {
     fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: 'rgba(255, 255, 255, 0.8)', // Blanco claro
     marginBottom: 6,
   },
   horaTemp: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#FFFFFF', // Blanco
   },
   diaRow: {
     flexDirection: 'row',
@@ -297,23 +458,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.15)',
+    borderBottomColor: 'rgba(255, 255, 255, 0.2)', // Línea divisoria 
   },
   diaNombre: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: '#FFFFFF', // Blanco
     width: 50,
   },
   textoNormal: {
     fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: 'rgba(255, 255, 255, 0.8)',
     flex: 1,
     textAlign: 'center',
   },
   textoLluvia: {
     fontSize: 13,
-    color: '#E0F2FE',
+    color: '#E0F2FE', // Celeste muy claro/blanco para el texto de lluvia
     fontWeight: '700',
     flex: 1,
     textAlign: 'center',
@@ -337,19 +498,118 @@ const styles = StyleSheet.create({
   },
   detalleCard: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 12,
+    borderWidth: 1,
+    borderColor: '#D0E8FF',
   },
   detalleLabel: {
     fontSize: 10,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: '#1E88E5',
     fontWeight: '800',
     marginBottom: 4,
   },
   detalleVal: {
     fontSize: 16,
     fontWeight: '700',
+    color: '#333333',
+  },
+  // Botón superior de recomendaciones
+  botonRecomendaciones: {
+    backgroundColor: '#1E88E5',
+    flexDirection: 'row',       // <--- Alinea el ícono y el texto en la misma línea
+    justifyContent: 'center',   // <--- Centra horizontalmente todo el contenido
+    alignItems: 'center',       // <--- Centra verticalmente el ícono con las letras
+    marginHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 6,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 30,           // <--- Estilo cápsula/píldora
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  textoBoton: {
     color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+  // Modal estilizaciones
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+  },
+  modalHeader: {
+    padding: 20,
+    backgroundColor: '#2382d6',
+    alignItems: 'center',
+  },
+  modalTitulo: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  modalContenido: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  tituloPrincipal: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#3596eb',
+    marginBottom: 8,
+  },
+  subtituloModal: {
+    fontSize: 14,
+    color: '#555555',
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  actividadCard: {
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderRadius: 15,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  actividadLugar: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#3596eb',
+    marginBottom: 6,
+  },
+  actividadTitulo: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1A202C',
+    marginBottom: 4,
+  },
+  actividadDescripcion: {
+    fontSize: 14,
+    color: '#4A5568',
+    lineHeight: 18,
+  },
+  // Botón inferior para cerrar el modal
+  botonCerrarInferior: {
+    backgroundColor: '#1E88E5',
+    marginTop: 20,
+    padding: 16,
+    borderRadius: 15,
+    alignItems: 'center',
+  },
+  textoBotonCerrar: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
