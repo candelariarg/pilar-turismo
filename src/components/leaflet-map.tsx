@@ -254,17 +254,7 @@ const generateBaseMapHTML = (userLocation: LocationCoords): string => {
             lineJoin: 'round'
           }).addTo(routeLayer);
 
-          // Pin de llegada Google Maps
-          var last = coords[coords.length - 1];
-          L.marker(last, {
-            icon: L.divIcon({
-              className: 'dest-marker',
-              html: makeDestPinSVG(),
-              iconSize: [44, 60],
-              iconAnchor: [22, 60]
-            }),
-            zIndexOffset: 2500
-          }).addTo(routeLayer);
+          // La ruta llega limpiamente al marcador del lugar sin gotita roja duplicada
 
           // Auto-encuadre con margen inferior para no tapar con el Bottom Sheet
           map.fitBounds(L.latLngBounds(coords), {

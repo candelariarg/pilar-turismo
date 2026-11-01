@@ -80,7 +80,7 @@ export default function ClimaScreen() {
     return t('weather.conditions.sunny');
   };
 
-  // Recomendaciones atractivas orientadas al turismo con los lugares de Pilar
+    // Recomendaciones atractivas orientadas al turismo con los lugares de Pilar
   const generarRecomendaciones = (
     probLluvia: number,
     codigoWmo: number
@@ -91,22 +91,22 @@ export default function ClimaScreen() {
     if (estaLloviendo) {
       return {
         tipo: 'lluvioso',
-        tituloPrincipal: 'Guía para días de lluvia en Pilar.',
-        subtitulo: 'El clima marca precipitaciones y es ideal para disfrutar de actividades bajo techo.',
+        tituloPrincipal: t('weather.recommendations.rainy.title'),
+        subtitulo: t('weather.recommendations.rainy.subtitle'),
         actividades: [
           {
-            titulo: 'Tarde de compras y entretenimiento',
-            descripcion: 'Recorré las tiendas cubiertas, el patio de comidas y locales.',
+            titulo: t('weather.recommendations.rainy.act1Title'),
+            descripcion: t('weather.recommendations.rainy.act1Desc'),
             lugar: 'Palmas del Pilar / Torres del Sol',
           },
           {
-            titulo: 'Arte, cultura y diversión',
-            descripcion: 'Disfrute de producciones teatrales memorables o de entretenimiento y opciones gastronómicas en un ambiente cerrado.',
+            titulo: t('weather.recommendations.rainy.act2Title'),
+            descripcion: t('weather.recommendations.rainy.act2Desc'),
             lugar: 'Teatro Gran Pilar / Bingo Oasis',
           },
           {
-            titulo: 'Paseo comercial y gastronómico',
-            descripcion: 'Un entorno abierto pero resguardado, ideal para cafeterías y boutiques.',
+            titulo: t('weather.recommendations.rainy.act3Title'),
+            descripcion: t('weather.recommendations.rainy.act3Desc'),
             lugar: 'Colonial / La Aldea',
           },
         ],
@@ -116,17 +116,17 @@ export default function ClimaScreen() {
     if (estaNublado || probLluvia > 50) {
       return {
         tipo: 'nublado',
-        tituloPrincipal: 'Guía para días nublados en Pilar.',
-        subtitulo: 'Un clima fresco y relajado, ideal para paseos tranquilos y disfrutar de la gastronomía local.',
+        tituloPrincipal: t('weather.recommendations.cloudy.title'),
+        subtitulo: t('weather.recommendations.cloudy.subtitle'),
         actividades: [
           {
-            titulo: 'Paseo comercial al aire libre',
-            descripcion: 'Disfrutá de una caminata tranquila entre locales comerciales, diseño y excelente gastronomía.',
+            titulo: t('weather.recommendations.cloudy.act1Title'),
+            descripcion: t('weather.recommendations.cloudy.act1Desc'),
             lugar: 'Paseo Champagnat',
           },
           {
-            titulo: 'Gastronomía y momentos únicos',
-            descripcion: 'Un punto de encuentro clásico para saborear un buen café y conectar con la esencia de Pilar.',
+            titulo: t('weather.recommendations.cloudy.act2Title'),
+            descripcion: t('weather.recommendations.cloudy.act2Desc'),
             lugar: 'La Aldea / Colonial',
           },
         ],
@@ -135,22 +135,22 @@ export default function ClimaScreen() {
 
     return {
       tipo: 'soleado',
-      tituloPrincipal: 'Guía para días soleados en Pilar.',
-      subtitulo: 'Aprovecha al maximo el clima y disfruta de actividades al aire libre.',
+      tituloPrincipal: t('weather.recommendations.sunny.title'),
+      subtitulo: t('weather.recommendations.sunny.subtitle'),
       actividades: [
         {
-          titulo: 'Historia y corazón de la ciudad',
-          descripcion: 'Recorré el pulmón histórico de Pilar, rodeado de centenarios árboles, arquitectura colonial y propuestas cercanas.',
+          titulo: t('weather.recommendations.sunny.act1Title'),
+          descripcion: t('weather.recommendations.sunny.act1Desc'),
           lugar: 'Plaza 12 de Octubre',
         },
         {
-          titulo: 'Conexión plena con la naturaleza',
-          descripcion: 'Ideal para caminatas, avistaje de aves y respirar aire puro en un entorno natural protegido.',
+          titulo: t('weather.recommendations.sunny.act2Title'),
+          descripcion: t('weather.recommendations.sunny.act2Desc'),
           lugar: 'Reserva Natural de Pilar',
         },
         {
-          titulo: 'Paseo y relax al aire libre',
-          descripcion: 'Disfrutá de espacios abiertos, arquitectura moderna y propuestas gastronómicas exclusivas para almorzar o merendar.',
+          titulo: t('weather.recommendations.sunny.act3Title'),
+          descripcion: t('weather.recommendations.sunny.act3Desc'),
           lugar: 'Lions 1987 / Paseo Champagnat',
         },
       ],
@@ -235,7 +235,7 @@ export default function ClimaScreen() {
          {/* Ícono de destellos / varita mágica */}
          <Ionicons name="map" size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
   
-         <Text style={styles.textoBoton}>Ver recomendaciones para hoy</Text>
+         <Text style={styles.textoBoton}>{t('weather.viewRecommendations')}</Text>
         </TouchableOpacity>
         {cargando ? (
           <View style={styles.loaderContainer}>
@@ -252,7 +252,7 @@ export default function ClimaScreen() {
                 <Text style={styles.badgeTexto}>PaseAR</Text>
               </View>
 
-              <Text style={styles.ciudad}>Pilar, Buenos Aires</Text>
+              <Text style={styles.ciudad}>{t('weather.city', 'Pilar, Buenos Aires')}</Text>
 
               <Text style={styles.temperatura}>
                 {clima ? `${clima.temperatura}°C` : '--'}
@@ -333,21 +333,24 @@ export default function ClimaScreen() {
         >
           <SafeAreaView style={styles.modalContainer}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitulo}>Recomendaciones</Text>
+              <Text style={styles.modalTitulo}>{t('weather.recommendationsTitle')}</Text>
             </View>
 
             <ScrollView contentContainerStyle={styles.modalContenido}>
-              {clima?.recomendacion && (
+              {(() => {
+                const rec = clima?.dias[0] ? generarRecomendaciones(clima.dias[0].probLluvia, clima.dias[0].codigoClima) : clima?.recomendacion;
+                if (!rec) return null;
+                return (
                 <>
                   <Text style={styles.tituloPrincipal}>
-                    {clima.recomendacion.tituloPrincipal}
+                    {rec.tituloPrincipal}
                   </Text>
 
                   <Text style={styles.subtituloModal}>
-                    {clima.recomendacion.subtitulo}
+                    {rec.subtitulo}
                   </Text>
 
-                 {clima.recomendacion.actividades.map((actividad, index) => (
+                 {rec.actividades.map((actividad, index) => (
                 <View key={index} style={styles.actividadCard}>
     
               {/* 1. Contenedor horizontal SOLO para el ícono + lugar */}
@@ -370,15 +373,15 @@ export default function ClimaScreen() {
 
               </View>
               ))}
-                </>
-              )}
+                </>);
+              })()}
 
               {/* Botón de cerrar ubicado abajo  */}
               <TouchableOpacity
                 style={styles.botonCerrarInferior}
                 onPress={() => setModalVisible(false)}
               >
-                <Text style={styles.textoBotonCerrar}>Cerrar</Text>
+                <Text style={styles.textoBotonCerrar}>{t('common.close')}</Text>
               </TouchableOpacity>
             </ScrollView>
           </SafeAreaView>

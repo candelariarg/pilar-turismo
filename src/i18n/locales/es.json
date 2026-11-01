@@ -59,7 +59,8 @@
       "closedNow": "Cerrado",
       "getDirections": "Cómo llegar",
       "moreInfo": "Más información"
-    }
+    },
+    "gpsRequired": "Aún no tenemos tu ubicación GPS."
   },
   "weather": {
     "title": "Clima en Pilar",
@@ -98,6 +99,39 @@
       "title": "Alertas Meteorológicas",
       "noAlerts": "No hay alertas activas para el Partido de Pilar",
       "rainAlert": "Probabilidad de lluvias fuertes hoy"
+    },
+    "viewRecommendations": "Ver recomendaciones para hoy",
+    "recommendationsTitle": "Recomendaciones",
+    "city": "Pilar, Buenos Aires",
+    "recommendations": {
+      "rainy": {
+        "title": "Guía para días de lluvia en Pilar.",
+        "subtitle": "El clima marca precipitaciones y es ideal para disfrutar de actividades bajo techo.",
+        "act1Title": "Tarde de compras y entretenimiento",
+        "act1Desc": "Recorré las tiendas cubiertas, el patio de comidas y locales.",
+        "act2Title": "Arte, cultura y diversión",
+        "act2Desc": "Disfrute de producciones teatrales memorables o de entretenimiento y opciones gastronómicas en un ambiente cerrado.",
+        "act3Title": "Paseo comercial y gastronómico",
+        "act3Desc": "Un entorno abierto pero resguardado, ideal para cafeterías y boutiques."
+      },
+      "cloudy": {
+        "title": "Guía para días nublados en Pilar.",
+        "subtitle": "Un clima fresco y relajado, ideal para paseos tranquilos y disfrutar de la gastronomía local.",
+        "act1Title": "Paseo comercial al aire libre",
+        "act1Desc": "Disfrutá de una caminata tranquila entre locales comerciales, diseño y excelente gastronomía.",
+        "act2Title": "Gastronomía y momentos únicos",
+        "act2Desc": "Un punto de encuentro clásico para saborear un buen café y conectar con la esencia de Pilar."
+      },
+      "sunny": {
+        "title": "Guía para días soleados en Pilar.",
+        "subtitle": "Aprovecha al maximo el clima y disfruta de actividades al aire libre.",
+        "act1Title": "Historia y corazón de la ciudad",
+        "act1Desc": "Recorré el pulmón histórico de Pilar, rodeado de centenarios árboles, arquitectura colonial y propuestas cercanas.",
+        "act2Title": "Conexión plena con la naturaleza",
+        "act2Desc": "Ideal para caminatas, avistaje de aves y respirar aire puro en un entorno natural protegido.",
+        "act3Title": "Paseo y relax al aire libre",
+        "act3Desc": "Disfrutá de espacios abiertos, arquitectura moderna y propuestas gastronómicas exclusivas para almorzar o merendar."
+      }
     }
   },
   "profile": {
@@ -153,5 +187,40 @@
     "close": "Cerrar",
     "search": "Buscar",
     "galleryPermission": "Se requiere acceso a la galería."
+  },
+  "auth": {
+    "loginTitle": "Iniciar sesión",
+    "loginSubtitle": "Bienvenido de nuevo",
+    "registerTitle": "Crear cuenta",
+    "registerSubtitle": "Completá tus datos para empezar",
+    "email": "Email",
+    "password": "Contraseña",
+    "repeatPassword": "Repetir contraseña",
+    "loginBtn": "Ingresar",
+    "registerBtn": "Crear cuenta",
+    "noAccount": "¿No tenés cuenta?",
+    "registerLink": "Registrate",
+    "alreadyHaveAccount": "¿Ya tenés cuenta?",
+    "loginLink": "Iniciá sesión"
+  },
+  "validation": {
+    "emailRequired": "Ingresá tu email.",
+    "emailInvalid": "El email no parece válido.",
+    "passwordRequired": "Ingresá tu contraseña.",
+    "passwordMin": "La contraseña necesita {{min}} caracteres o más.",
+    "confirmRequired": "Repetí tu contraseña.",
+    "passwordsMismatch": "Las contraseñas no coinciden."
+  },
+  "firebaseErrors": {
+    "invalidEmail": "El email no es válido.",
+    "invalidCredential": "Email o contraseña incorrectos.",
+    "emailAlreadyInUse": "Ya existe una cuenta con ese email.",
+    "weakPassword": "La contraseña necesita {{min}} caracteres o más.",
+    "tooManyRequests": "Demasiados intentos. Probá en unos minutos.",
+    "networkFailed": "Sin conexión a internet.",
+    "operationNotAllowed": "El acceso con email y contraseña no está habilitado.",
+    "userNotFound": "No existe una cuenta con ese email.",
+    "unauthorizedContinueUri": "La URL de retorno no está autorizada.",
+    "default": "Ocurrió un error. Intentá de nuevo."
   }
 }

@@ -59,7 +59,8 @@
       "closedNow": "Closed",
       "getDirections": "Get directions",
       "moreInfo": "More info"
-    }
+    },
+    "gpsRequired": "We do not have your GPS location yet."
   },
   "weather": {
     "title": "Weather in Pilar",
@@ -98,6 +99,39 @@
       "title": "Weather Alerts",
       "noAlerts": "No active weather alerts for Pilar Region",
       "rainAlert": "Chance of heavy rain today"
+    },
+    "viewRecommendations": "View today's recommendations",
+    "recommendationsTitle": "Recommendations",
+    "city": "Pilar, Buenos Aires",
+    "recommendations": {
+      "rainy": {
+        "title": "Guide for rainy days in Pilar.",
+        "subtitle": "Precipitation is expected, making it ideal for indoor activities.",
+        "act1Title": "Shopping & entertainment afternoon",
+        "act1Desc": "Stroll through covered shopping malls, the food court, and local stores.",
+        "act2Title": "Art, culture & entertainment",
+        "act2Desc": "Enjoy memorable theater productions or indoor entertainment and dining options.",
+        "act3Title": "Commercial & dining walk",
+        "act3Desc": "An open yet sheltered environment, perfect for specialty cafes and boutique shopping."
+      },
+      "cloudy": {
+        "title": "Guide for cloudy days in Pilar.",
+        "subtitle": "Cool and relaxed weather, ideal for peaceful walks and savoring local gastronomy.",
+        "act1Title": "Open-air shopping stroll",
+        "act1Desc": "Enjoy a relaxed walk among retail stores, local design, and great gastronomy.",
+        "act2Title": "Gastronomy & special moments",
+        "act2Desc": "A classic meeting spot to savor delicious coffee and connect with the heart of Pilar."
+      },
+      "sunny": {
+        "title": "Guide for sunny days in Pilar.",
+        "subtitle": "Make the most of the weather and enjoy outdoor activities.",
+        "act1Title": "City history & town center",
+        "act1Desc": "Explore the historic center of Pilar, surrounded by centennial trees, colonial architecture, and local sights.",
+        "act2Title": "Full connection with nature",
+        "act2Desc": "Ideal for nature walks, birdwatching, and breathing fresh air in a protected natural reserve.",
+        "act3Title": "Outdoor leisure & dining",
+        "act3Desc": "Enjoy open green spaces, modern architecture, and exclusive dining spots for lunch or tea."
+      }
     }
   },
   "profile": {
@@ -153,5 +187,40 @@
     "close": "Close",
     "search": "Search",
     "galleryPermission": "Gallery permission is required."
+  },
+  "auth": {
+    "loginTitle": "Sign In",
+    "loginSubtitle": "Welcome back",
+    "registerTitle": "Create Account",
+    "registerSubtitle": "Fill in your details to get started",
+    "email": "Email",
+    "password": "Password",
+    "repeatPassword": "Repeat password",
+    "loginBtn": "Log In",
+    "registerBtn": "Sign Up",
+    "noAccount": "Don't have an account?",
+    "registerLink": "Sign up",
+    "alreadyHaveAccount": "Already have an account?",
+    "loginLink": "Log in"
+  },
+  "validation": {
+    "emailRequired": "Please enter your email.",
+    "emailInvalid": "The email address does not appear to be valid.",
+    "passwordRequired": "Please enter your password.",
+    "passwordMin": "The password must have at least {{min}} characters.",
+    "confirmRequired": "Please repeat your password.",
+    "passwordsMismatch": "Passwords do not match."
+  },
+  "firebaseErrors": {
+    "invalidEmail": "The email address is invalid.",
+    "invalidCredential": "Incorrect email or password.",
+    "emailAlreadyInUse": "An account already exists with that email.",
+    "weakPassword": "The password must have at least {{min}} characters.",
+    "tooManyRequests": "Too many attempts. Please try again in a few minutes.",
+    "networkFailed": "No internet connection.",
+    "operationNotAllowed": "Email/password authentication is not enabled.",
+    "userNotFound": "No account found with that email.",
+    "unauthorizedContinueUri": "The return URL is not authorized.",
+    "default": "An error occurred. Please try again."
   }
 }

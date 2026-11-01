@@ -65,7 +65,7 @@ export default function PerfilScreen() {
       await verificarEmail();
       setMensaje(t('profile.verificationSent', { email: user?.email }));
     } catch (e) {
-      setMensaje(mensajeDeErrorFirebase(codigoDeError(e)));
+      setMensaje(mensajeDeErrorFirebase(codigoDeError(e), t));
     } finally {
       setEnviando(false);
     }
@@ -115,7 +115,7 @@ export default function PerfilScreen() {
       await cambiarPassword(email);
       setMensaje(t('profile.passwordResetSent', { email }));
     } catch (e) {
-      setMensaje(mensajeDeErrorFirebase(codigoDeError(e)));
+      setMensaje(mensajeDeErrorFirebase(codigoDeError(e), t));
     } finally {
       setEnviando(false);
     }

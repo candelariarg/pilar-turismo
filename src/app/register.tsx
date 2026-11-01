@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Link, router } from "expo-router";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/src/contexts/AuthContext";
 import { authStyles as s } from "@/src/constants/auth-styles";
 import {
@@ -23,6 +24,7 @@ import {
 } from "@/src/utils/validaciones";
 
 export default function RegisterScreen() {
+  const { t } = useTranslation();
   const { register } = useAuth();
 
   const [email, setEmail] = useState("");
@@ -36,9 +38,9 @@ export default function RegisterScreen() {
 
   const registrarse = async () => {
     // 1. Validar en el dispositivo antes de llamar a Firebase.
-    const fallaEmail = validarEmail(email);
-    const fallaPassword = validarPassword(password);
-    const fallaConfirmacion = validarConfirmacion(password, confirmacion);
+    const fallaEmail = validarEmail(email, t);
+    const fallaPassword = validarPassword(password, t);
+    const fallaConfirmacion = validarConfirmacion(password, confirmacion, t);
 
     setErrorEmail(fallaEmail);
     setErrorPassword(fallaPassword);
@@ -53,7 +55,7 @@ export default function RegisterScreen() {
       await register(email.trim(), password);
       router.replace("/(tabs)");
     } catch (e) {
-      setErrorGeneral(mensajeDeErrorFirebase(codigoDeError(e)));
+      setErrorGeneral(mensajeDeErrorFirebase(codigoDeError(e), t));
     } finally {
       setCargando(false);
     }
@@ -79,17 +81,17 @@ export default function RegisterScreen() {
               accessibilityLabel="PaseAR"
             />
             <Text style={s.nombre}>PaseAR</Text>
-            <Text style={s.lema}>Descubrí tu próximo destino!</Text>
+            <Text style={s.lema}>{t('header.subtitle')}</Text>
           </View>
 
           {/* Formulario */}
           <View style={s.tarjeta}>
-            <Text style={s.titulo}>Crear cuenta</Text>
-            <Text style={s.subtitulo}>Completá tus datos para empezar</Text>
+            <Text style={s.titulo}>{t('auth.registerTitle')}</Text>
+            <Text style={s.subtitulo}>{t('auth.registerSubtitle')}</Text>
 
             <TextInput
               style={[s.input, !!errorEmail && s.inputError]}
-              placeholder="Email"
+              placeholder={t('auth.email')}
               placeholderTextColor="#9AAAB6"
               value={email}
               onChangeText={(texto) => {
@@ -105,7 +107,7 @@ export default function RegisterScreen() {
 
             <TextInput
               style={[s.input, !!errorPassword && s.inputError]}
-              placeholder="Contraseña"
+              placeholder={t('auth.password')}
               placeholderTextColor="#9AAAB6"
               value={password}
               onChangeText={(texto) => {
@@ -124,7 +126,7 @@ export default function RegisterScreen() {
 
             <TextInput
               style={[s.input, !!errorConfirmacion && s.inputError]}
-              placeholder="Repetir contraseña"
+              placeholder={t('auth.repeatPassword')}
               placeholderTextColor="#9AAAB6"
               value={confirmacion}
               onChangeText={(texto) => {
@@ -156,7 +158,7 @@ export default function RegisterScreen() {
               {cargando ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Text style={s.botonTexto}>Crear cuenta</Text>
+                <Text style={s.botonTexto}>{t('auth.registerBtn')}</Text>
               )}
             </Pressable>
           </View>
@@ -165,8 +167,8 @@ export default function RegisterScreen() {
           <Link href="/login" asChild>
             <Pressable hitSlop={8}>
               <Text style={s.pie}>
-                ¿Ya tenés cuenta?{" "}
-                <Text style={s.pieEnlace}>Iniciá sesión</Text>
+                {t('auth.alreadyHaveAccount')}{" "}
+                <Text style={s.pieEnlace}>{t('auth.loginLink')}</Text>
               </Text>
             </Pressable>
           </Link>

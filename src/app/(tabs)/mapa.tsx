@@ -56,7 +56,9 @@ export default function ExploreScreen() {
     userLocation,
     places,
     selectedPlace,
+    setSelectedPlace,
     routeData,
+    setRouteData,
     loading,
     errorMsg,
     transportMode,
@@ -146,7 +148,8 @@ export default function ExploreScreen() {
   const handleMarkerPress = (placeId: string) => {
     const place = places.find((p) => p.id === placeId);
     if (place) {
-      calculateRouteTo(place);
+      setSelectedPlace(place);
+      setRouteData(null);
     }
   };
   // ============================================================
@@ -184,7 +187,7 @@ export default function ExploreScreen() {
             ) : userLocation ? (
               <LeafletMap
                 userLocation={userLocation}
-                places={isNavigating ? [] : places}
+                places={isNavigating ? (selectedPlace ? [selectedPlace] : []) : places}
                 selectedPlace={selectedPlace}
                 routeData={routeData}
                 onMarkerPress={handleMarkerPress}
@@ -429,77 +432,94 @@ export default function ExploreScreen() {
                 </TouchableOpacity>
               </View>
 
-              {/* Selector de modo de transporte */}
-              <View style={styles.transportSelector}>
+              {!routeData ? (
+                /* Botón destacado: Cómo llegar (calcula la ruta manualmente) */
                 <TouchableOpacity
-                  style={[styles.transportBtn, transportMode === 'driving' && styles.transportBtnActive]}
-                  onPress={() => changeTransportMode('driving')}
+                  style={[styles.btnNavegar, { marginTop: 14 }]}
+                  onPress={() => calculateRouteTo(selectedPlace, transportMode)}
+                  activeOpacity={0.85}
+                  disabled={loading}
                 >
-                  <Ionicons name="car" size={19} color={transportMode === 'driving' ? '#1A73E8' : '#70757A'} />
-                  <Text style={[styles.transportBtnText, transportMode === 'driving' && styles.transportBtnTextActive]}>
-                    {t('map.transport.car')}
-                  </Text>
-                  {routeData && transportMode === 'driving' && (
-                    <Text style={styles.transportBtnTime}>{routeData.durationMin} {t('map.min')}</Text>
+                  {loading ? (
+                    <>
+                      <ActivityIndicator size="small" color="#FFF" style={{ marginRight: 8 }} />
+                      <Text style={styles.btnPrimaryText}>{t('map.calculatingRoute')}</Text>
+                    </>
+                  ) : (
+                    <>
+                      <Ionicons name="navigate" size={19} color="#FFF" style={{ marginRight: 8 }} />
+                      <Text style={styles.btnPrimaryText}>{t('map.placeDetails.getDirections')}</Text>
+                    </>
                   )}
                 </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.transportBtn, transportMode === 'foot' && styles.transportBtnActive]}
-                  onPress={() => changeTransportMode('foot')}
-                >
-                  <Ionicons name="walk" size={19} color={transportMode === 'foot' ? '#1A73E8' : '#70757A'} />
-                  <Text style={[styles.transportBtnText, transportMode === 'foot' && styles.transportBtnTextActive]}>
-                    {t('map.transport.walk')}
-                  </Text>
-                  {routeData && transportMode === 'foot' && (
-                    <Text style={styles.transportBtnTime}>{routeData.durationMin} {t('map.min')}</Text>
-                  )}
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.transportBtn, transportMode === 'bike' && styles.transportBtnActive]}
-                  onPress={() => changeTransportMode('bike')}
-                >
-                  <Ionicons name="bicycle" size={19} color={transportMode === 'bike' ? '#1A73E8' : '#70757A'} />
-                  <Text style={[styles.transportBtnText, transportMode === 'bike' && styles.transportBtnTextActive]}>
-                    {t('map.transport.bike')}
-                  </Text>
-                  {routeData && transportMode === 'bike' && (
-                    <Text style={styles.transportBtnTime}>{routeData.durationMin} {t('map.min')}</Text>
-                  )}
-                </TouchableOpacity>
-              </View>
-
-              {/* Métricas estimadas de distancia y tiempo */}
-              {routeData ? (
-                <View style={styles.metricsRow}>
-                  <View style={styles.metricItem}>
-                    <Text style={styles.metricBigValue}>{routeData.distanceKm} km</Text>
-                    <Text style={styles.metricLabel}>{t('map.distance')}</Text>
-                  </View>
-                  <View style={styles.metricDivider} />
-                  <View style={styles.metricItem}>
-                    <Text style={styles.metricBigValue}>{routeData.durationMin} min</Text>
-                    <Text style={styles.metricLabel}>{t('map.estimatedTime')}</Text>
-                  </View>
-                </View>
               ) : (
-                <View style={styles.metricsRow}>
-                  <ActivityIndicator size="small" color="#1A73E8" />
-                  <Text style={{ marginLeft: 10, color: '#70757A', fontSize: 13 }}>{t('map.calculatingRoute')}</Text>
-                </View>
-              )}
+                <>
+                  {/* Selector de modo de transporte */}
+                  <View style={styles.transportSelector}>
+                    <TouchableOpacity
+                      style={[styles.transportBtn, transportMode === 'driving' && styles.transportBtnActive]}
+                      onPress={() => changeTransportMode('driving')}
+                    >
+                      <Ionicons name="car" size={19} color={transportMode === 'driving' ? '#1A73E8' : '#70757A'} />
+                      <Text style={[styles.transportBtnText, transportMode === 'driving' && styles.transportBtnTextActive]}>
+                        {t('map.transport.car')}
+                      </Text>
+                      {transportMode === 'driving' && (
+                        <Text style={styles.transportBtnTime}>{routeData.durationMin} {t('map.min')}</Text>
+                      )}
+                    </TouchableOpacity>
 
-              {/* Botón Iniciar Navegación estilo Google Maps */}
-              <TouchableOpacity
-                style={styles.btnNavegar}
-                onPress={iniciarNavegacion}
-                activeOpacity={0.85}
-              >
-                <Ionicons name="navigate" size={19} color="#FFF" style={{ marginRight: 8 }} />
-                <Text style={styles.btnPrimaryText}>{t('map.startNavigation')}</Text>
-              </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.transportBtn, transportMode === 'foot' && styles.transportBtnActive]}
+                      onPress={() => changeTransportMode('foot')}
+                    >
+                      <Ionicons name="walk" size={19} color={transportMode === 'foot' ? '#1A73E8' : '#70757A'} />
+                      <Text style={[styles.transportBtnText, transportMode === 'foot' && styles.transportBtnTextActive]}>
+                        {t('map.transport.walk')}
+                      </Text>
+                      {transportMode === 'foot' && (
+                        <Text style={styles.transportBtnTime}>{routeData.durationMin} {t('map.min')}</Text>
+                      )}
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[styles.transportBtn, transportMode === 'bike' && styles.transportBtnActive]}
+                      onPress={() => changeTransportMode('bike')}
+                    >
+                      <Ionicons name="bicycle" size={19} color={transportMode === 'bike' ? '#1A73E8' : '#70757A'} />
+                      <Text style={[styles.transportBtnText, transportMode === 'bike' && styles.transportBtnTextActive]}>
+                        {t('map.transport.bike')}
+                      </Text>
+                      {transportMode === 'bike' && (
+                        <Text style={styles.transportBtnTime}>{routeData.durationMin} {t('map.min')}</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Métricas estimadas de distancia y tiempo */}
+                  <View style={styles.metricsRow}>
+                    <View style={styles.metricItem}>
+                      <Text style={styles.metricBigValue}>{routeData.distanceKm} km</Text>
+                      <Text style={styles.metricLabel}>{t('map.distance')}</Text>
+                    </View>
+                    <View style={styles.metricDivider} />
+                    <View style={styles.metricItem}>
+                      <Text style={styles.metricBigValue}>{routeData.durationMin} min</Text>
+                      <Text style={styles.metricLabel}>{t('map.estimatedTime')}</Text>
+                    </View>
+                  </View>
+
+                  {/* Botón Iniciar Navegación estilo Google Maps */}
+                  <TouchableOpacity
+                    style={styles.btnNavegar}
+                    onPress={iniciarNavegacion}
+                    activeOpacity={0.85}
+                  >
+                    <Ionicons name="navigate" size={19} color="#FFF" style={{ marginRight: 8 }} />
+                    <Text style={styles.btnPrimaryText}>{t('map.startNavigation')}</Text>
+                  </TouchableOpacity>
+                </>
+              )}
             </Animated.View>
           )}
           {/* ============================================================ */}

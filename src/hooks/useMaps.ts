@@ -128,13 +128,7 @@ export const useMaps = () => {
     };
     // ============================================================
 
-    // Si ya hay un lugar seleccionado y la ubicación GPS recién termina de cargar,
-    // calculamos la ruta automáticamente hacia el destino
-    useEffect(() => {
-        if (userLocation && selectedPlace && !routeData) {
-            calculateRouteTo(selectedPlace, transportMode);
-        }
-    }, [userLocation]);
+    // Selección manual: no calculamos la ruta automáticamente hasta que el usuario toque "Cómo llegar"
 
     // ============================================================
     // 8. Función para enfocar y marcar un lugar recibido desde otra pantalla
@@ -162,11 +156,7 @@ export const useMaps = () => {
             };
             setPlaces([place]);
             setSelectedPlace(place);
-            if (userLocation) {
-                const destination = { latitude: place.latitude, longitude: place.longitude };
-                const route = await fetchRouteOSRM(userLocation, destination, transportMode);
-                setRouteData(route);
-            }
+            setRouteData(null);
             setLoading(false);
             return place;
         }
@@ -200,11 +190,7 @@ export const useMaps = () => {
             }
             setPlaces([target]);
             setSelectedPlace(target);
-            if (userLocation) {
-                const destination = { latitude: target.latitude, longitude: target.longitude };
-                const route = await fetchRouteOSRM(userLocation, destination, transportMode);
-                setRouteData(route);
-            }
+            setRouteData(null);
             setLoading(false);
             return target;
         }
@@ -218,6 +204,8 @@ export const useMaps = () => {
         userLocation,
         places,
         selectedPlace,
+        setSelectedPlace,
+        setRouteData,
         routeData,
         loading,
         errorMsg,
