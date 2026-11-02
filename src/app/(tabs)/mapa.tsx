@@ -44,6 +44,7 @@ export default function ExploreScreen() {
   const [textoBusqueda, setTextoBusqueda] = useState('');
   const [centrarEnUsuario, setCentrarEnUsuario] = useState(0); // contador para disparar re-center
   const [cardHeight, setCardHeight] = useState(0);
+  const [mostrarItinerario, setMostrarItinerario] = useState(false);
 
   // Animación slide-up del bottom sheet (estilo Google Maps)
   const slideAnim = useRef(new Animated.Value(400)).current;
@@ -483,18 +484,106 @@ export default function ExploreScreen() {
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                      style={[styles.transportBtn, transportMode === 'bike' && styles.transportBtnActive]}
-                      onPress={() => changeTransportMode('bike')}
+                      style={[styles.transportBtn, transportMode === 'transit' && styles.transportBtnActive]}
+                      onPress={() => changeTransportMode('transit')}
                     >
-                      <Ionicons name="bicycle" size={19} color={transportMode === 'bike' ? '#1A73E8' : '#70757A'} />
-                      <Text style={[styles.transportBtnText, transportMode === 'bike' && styles.transportBtnTextActive]}>
-                        {t('map.transport.bike')}
+                      <Ionicons name="bus" size={19} color={transportMode === 'transit' ? '#1A73E8' : '#70757A'} />
+                      <Text style={[styles.transportBtnText, transportMode === 'transit' && styles.transportBtnTextActive]}>
+                        {t('map.transport.transit')}
                       </Text>
-                      {transportMode === 'bike' && (
+                      {transportMode === 'transit' && (
                         <Text style={styles.transportBtnTime}>{routeData.durationMin} {t('map.min')}</Text>
                       )}
                     </TouchableOpacity>
                   </View>
+
+                  {/* VISTA ESPECÍFICA PARA TRANSPORTE PÚBLICO */}
+                  {transportMode === 'transit' && routeData.transitSummary && (
+                    <View style={styles.transitContainer}>
+                      {/* Flujo visual con Badges de transbordo */}
+                      <View style={styles.transitBadgesRow}>
+                        <View style={styles.badgeWalk}>
+                          <Ionicons name="walk" size={13} color="#5F6368" />
+                          <Text style={styles.badgeWalkText}>
+                            {routeData.transitSteps?.[0]?.durationMin || 3} min
+                          </Text>
+                        </View>
+
+                        <Ionicons name="arrow-forward" size={12} color="#9AA0A6" />
+
+                        <View style={[styles.badgeBus, { backgroundColor: routeData.transitSteps?.[1]?.color || '#0288D1' }]}>
+                          <Ionicons name="bus" size={13} color="#FFFFFF" />
+                          <Text style={styles.badgeBusText}>
+                            {routeData.transitSummary.lineName}
+                          </Text>
+                        </View>
+
+                        <Ionicons name="arrow-forward" size={12} color="#9AA0A6" />
+
+                        <View style={styles.badgeWalk}>
+                          <Ionicons name="walk" size={13} color="#5F6368" />
+                          <Text style={styles.badgeWalkText}>
+                            {routeData.transitSteps?.[2]?.durationMin || 2} min
+                          </Text>
+                        </View>
+                      </View>
+
+                      {/* Caja informativa de Frecuencia y Próximo Arribo */}
+                      <View style={styles.transitInfoBox}>
+                        <View style={styles.transitInfoItem}>
+                          <Ionicons name="time-outline" size={14} color="#1A73E8" />
+                          <Text style={styles.transitInfoText}>{routeData.transitSummary.frequencyText}</Text>
+                        </View>
+                        <View style={styles.transitInfoDivider} />
+                        <View style={styles.transitInfoItem}>
+                          <Ionicons name="radio" size={13} color="#34A853" />
+                          <Text style={styles.transitInfoText}>
+                            {t('map.transitNextIn', { min: routeData.transitSummary.nextArrivalMin })}
+                          </Text>
+                        </View>
+                      </View>
+
+                      {/* Botón para desplegar/ocultar el itinerario paso a paso */}
+                      <TouchableOpacity
+                        style={styles.itineraryToggle}
+                        onPress={() => setMostrarItinerario(!mostrarItinerario)}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={styles.itineraryToggleText}>
+                          {mostrarItinerario ? t('map.hideItinerary') : t('map.viewItinerary')}
+                        </Text>
+                        <Ionicons name={mostrarItinerario ? 'chevron-up' : 'chevron-down'} size={15} color="#1A73E8" />
+                      </TouchableOpacity>
+
+                      {/* Lista de pasos del itinerario detallado */}
+                      {mostrarItinerario && routeData.transitSteps && (
+                        <View style={styles.itineraryStepsContainer}>
+                          {routeData.transitSteps.map((step, idx) => (
+                            <View key={idx} style={styles.itineraryStepRow}>
+                              <View style={styles.itineraryIconCol}>
+                                <View style={[styles.itineraryDot, step.type === 'bus' && { backgroundColor: step.color || '#2E7D32' }]}>
+                                  <Ionicons
+                                    name={step.type === 'walk' ? 'walk' : 'bus'}
+                                    size={12}
+                                    color={step.type === 'walk' ? '#5F6368' : '#FFFFFF'}
+                                  />
+                                </View>
+                                {idx < (routeData.transitSteps?.length || 0) - 1 && <View style={styles.itineraryLine} />}
+                              </View>
+                              <View style={styles.itineraryContentCol}>
+                                <Text style={styles.itineraryStepTitle}>{step.instruction}</Text>
+                                <Text style={styles.itineraryStepSubtitle}>
+                                  {step.type === 'bus'
+                                    ? `${step.stopsCount || 4} paradas (~${step.durationMin} min) • Subida: ${step.departureStop}`
+                                    : `${Math.round((step.distanceKm || 0.2) * 1000)} m (~${step.durationMin} min)`}
+                                </Text>
+                              </View>
+                            </View>
+                          ))}
+                        </View>
+                      )}
+                    </View>
+                  )}
 
                   {/* Métricas estimadas de distancia y tiempo */}
                   <View style={styles.metricsRow}>
@@ -608,6 +697,7 @@ const styles = StyleSheet.create({
     top: 10,
     left: 0,
     right: 0,
+    maxHeight: '75%',
     zIndex: 50,
   },
   floatingSearchBar: {
@@ -707,6 +797,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
+    maxHeight: '75%',
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
@@ -823,6 +914,134 @@ const styles = StyleSheet.create({
     paddingVertical: 1,
     marginTop: 3,
     overflow: 'hidden',
+  },
+
+  // ============================================================
+  // ============================================================
+  // Estilos de Transporte Público (Google Maps / Moovit style)
+  // ============================================================
+  transitContainer: {
+    marginTop: 10,
+    marginBottom: 4,
+  },
+  transitBadgesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginVertical: 6,
+  },
+  badgeWalk: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F1F3F4',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  badgeWalkText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#5F6368',
+  },
+  badgeBus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 5,
+  },
+  badgeBusText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  transitInfoBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    backgroundColor: '#F8F9FA',
+    borderRadius: 10,
+    paddingVertical: 7,
+    paddingHorizontal: 10,
+    marginTop: 4,
+    borderWidth: 1,
+    borderColor: '#E8EAED',
+  },
+  transitInfoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  transitInfoText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#3C4043',
+  },
+  transitInfoDivider: {
+    width: 1,
+    height: 16,
+    backgroundColor: '#DADCE0',
+  },
+  itineraryToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    marginTop: 6,
+    gap: 4,
+  },
+  itineraryToggleText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#1A73E8',
+  },
+  itineraryStepsContainer: {
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 4,
+    borderWidth: 1,
+    borderColor: '#E8EAED',
+  },
+  itineraryStepRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  itineraryIconCol: {
+    alignItems: 'center',
+    width: 24,
+    marginRight: 8,
+  },
+  itineraryDot: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#E8EAED',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  itineraryLine: {
+    width: 2,
+    height: 26,
+    backgroundColor: '#DADCE0',
+    marginVertical: 2,
+  },
+  itineraryContentCol: {
+    flex: 1,
+    paddingBottom: 8,
+  },
+  itineraryStepTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#202124',
+  },
+  itineraryStepSubtitle: {
+    fontSize: 11,
+    color: '#5F6368',
+    marginTop: 2,
   },
 
   // ============================================================

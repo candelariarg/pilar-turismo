@@ -24,11 +24,40 @@ export interface Place {
     address: string;          // Dirección aproximada
 }
 
+// Pasos detallados del viaje en transporte público
+export interface TransitStep {
+    type: 'walk' | 'bus' | 'train';
+    instruction: string;
+    lineName?: string;          // Ej: "Línea 57" o "Línea 203"
+    headsign?: string;          // Ej: "Ramal Pilar Centro"
+    durationMin: number;
+    distanceKm: number;
+    stopsCount?: number;
+    color?: string;             // Color representativo (ej: "#0288D1", "#D32F2F")
+    departureStop?: string;     // Nombre de la parada donde se sube
+    arrivalStop?: string;       // Nombre de la parada donde se baja
+    coordinates: LocationCoords[];
+}
+
+// Resumen general de la ruta de transporte
+export interface TransitSummary {
+    lineName: string;
+    headsign: string;
+    frequencyText: string;
+    nextArrivalMin: number;
+    totalWalkMin: number;
+    totalTransitMin: number;
+    stopsCount: number;
+}
+
 // Estructura de los datos de una Ruta (para trazar el camino)
 export interface RouteData {
     distanceKm: number;           // Distancia total en Kilómetros
     durationMin: number;          // Tiempo estimado en Minutos
     coordinates: LocationCoords[]; // Lista de todos los puntitos que forman la línea de la ruta
+    mode?: 'driving' | 'foot' | 'transit';
+    transitSteps?: TransitStep[];
+    transitSummary?: TransitSummary;
 }
 
 // =====================================================================

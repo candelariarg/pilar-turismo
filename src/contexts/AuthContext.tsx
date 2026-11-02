@@ -13,6 +13,7 @@ import {
   createUserWithEmailAndPassword,
   sendEmailVerification,
   sendPasswordResetEmail,
+  updateProfile,
 } from "firebase/auth";
 import { auth } from "../configuracion/FirebaseConfig";
 

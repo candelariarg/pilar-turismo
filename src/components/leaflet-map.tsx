@@ -236,30 +236,93 @@ const generateBaseMapHTML = (userLocation: LocationCoords): string => {
           if (!routeData || !routeData.coordinates || routeData.coordinates.length === 0) return;
           var coords = routeData.coordinates.map(function(c) { return [c.latitude, c.longitude]; });
 
-          // Halo exterior azul oscuro
-          L.polyline(coords, {
-            color: '#0D47A1',
-            weight: 9,
-            opacity: 0.9,
-            lineCap: 'round',
-            lineJoin: 'round'
-          }).addTo(routeLayer);
+          // Si es ruta de transporte público con pasos diferenciados
+          if (routeData.transitSteps && routeData.transitSteps.length > 0) {
+            routeData.transitSteps.forEach(function(step) {
+              if (!step.coordinates || step.coordinates.length === 0) return;
+              var stepCoords = step.coordinates.map(function(c) { return [c.latitude, c.longitude]; });
 
-          // Línea interior azul Google #1A73E8
-          L.polyline(coords, {
-            color: '#1A73E8',
-            weight: 5,
-            opacity: 1,
-            lineCap: 'round',
-            lineJoin: 'round'
-          }).addTo(routeLayer);
+              if (step.type === 'walk') {
+                // Tramo a pie: línea punteada moderna
+                L.polyline(stepCoords, {
+                  color: '#1A73E8',
+                  weight: 5,
+                  dashArray: '6, 8',
+                  opacity: 0.9,
+                  lineCap: 'round',
+                  lineJoin: 'round'
+                }).addTo(routeLayer);
+              } else if (step.type === 'bus' || step.type === 'train') {
+                var lineColor = step.color || '#2E7D32';
 
-          // La ruta llega limpiamente al marcador del lugar sin gotita roja duplicada
+                // Halo exterior oscuro
+                L.polyline(stepCoords, {
+                  color: '#000000',
+                  weight: 9,
+                  opacity: 0.22,
+                  lineCap: 'round',
+                  lineJoin: 'round'
+                }).addTo(routeLayer);
+
+                // Línea principal del transporte público
+                L.polyline(stepCoords, {
+                  color: lineColor,
+                  weight: 6,
+                  opacity: 1,
+                  lineCap: 'round',
+                  lineJoin: 'round'
+                }).addTo(routeLayer);
+
+                // Marcador de parada de subida
+                if (stepCoords.length > 0) {
+                  var startPt = stepCoords[0];
+                  var stopName = step.lineName || 'Colectivo';
+                  L.marker(startPt, {
+                    icon: L.divIcon({
+                      className: 'custom-marker',
+                      html: '<div style="background:' + lineColor + ';border:2px solid #FFF;border-radius:12px;padding:3px 8px;box-shadow:0 2px 6px rgba(0,0,0,0.35);display:flex;align-items:center;gap:4px;font-family:sans-serif;font-size:11px;font-weight:700;color:#FFF;white-space:nowrap;">🚌 ' + stopName + '</div>',
+                      iconAnchor: [24, 12]
+                    }),
+                    zIndexOffset: 1200
+                  }).addTo(routeLayer);
+
+                  // Marcador de parada de descenso
+                  var endPt = stepCoords[stepCoords.length - 1];
+                  L.marker(endPt, {
+                    icon: L.divIcon({
+                      className: 'custom-marker',
+                      html: '<div style="background:#5F6368;border:2px solid #FFF;border-radius:12px;padding:3px 8px;box-shadow:0 2px 6px rgba(0,0,0,0.35);display:flex;align-items:center;gap:4px;font-family:sans-serif;font-size:11px;font-weight:700;color:#FFF;white-space:nowrap;">🛑 Bajar aquí</div>',
+                      iconAnchor: [24, 12]
+                    }),
+                    zIndexOffset: 1100
+                  }).addTo(routeLayer);
+                }
+              }
+            });
+          } else {
+            // Halo exterior azul oscuro
+            L.polyline(coords, {
+              color: '#0D47A1',
+              weight: 9,
+              opacity: 0.9,
+              lineCap: 'round',
+              lineJoin: 'round'
+            }).addTo(routeLayer);
+
+            // Línea interior azul Google #1A73E8
+            L.polyline(coords, {
+              color: '#1A73E8',
+              weight: 5,
+              opacity: 1,
+              lineCap: 'round',
+              lineJoin: 'round'
+            }).addTo(routeLayer);
+          }
 
           // Auto-encuadre con margen inferior para no tapar con el Bottom Sheet
           map.fitBounds(L.latLngBounds(coords), {
             paddingTopLeft: [70, 50],
-            paddingBottomRight: [50, 300],
+            paddingBottomRight: [50, 320],
             maxZoom: 16,
             animate: true,
             duration: 1.0

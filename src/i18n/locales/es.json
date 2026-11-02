@@ -37,8 +37,11 @@
     "transport": {
       "car": "Auto",
       "walk": "A pie",
-      "bike": "Bici"
+      "transit": "Transporte"
     },
+    "transitNextIn": "Próximo en ~{{min}} min",
+    "viewItinerary": "Ver itinerario paso a paso",
+    "hideItinerary": "Ocultar itinerario",
     "categories": {
       "all": "Todos",
       "hospital": "Hospitales",

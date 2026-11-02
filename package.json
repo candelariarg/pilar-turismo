@@ -6,6 +6,7 @@
     "@ai-sdk/deepseek": "^3.0.56",
     "@expo/ui": "~58.0.24",
     "@expo/vector-icons": "^15.0.2",
+    "@here/flexpolyline": "^0.1.0",
     "expo": "~58.0.20",
     "expo-constants": "~58.0.13",
     "expo-device": "~58.0.5",

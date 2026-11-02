@@ -4,7 +4,7 @@ import { Place, PlaceCategory, LocationCoords, RouteData } from '../servicios/ma
 import { fetchPlacesOSM, fetchRouteOSRM, searchPlacesOSM } from '../servicios/map/mapServices';
 
 // Definimos los tipos de transporte soportados
-export type TransportMode = 'driving' | 'foot' | 'bike';
+export type TransportMode = 'driving' | 'foot' | 'transit';
 
 export const useMaps = () => {
     // ============================================================
@@ -99,7 +99,7 @@ export const useMaps = () => {
     // ============================================================
 
     // ============================================================
-    // 5. Función para cambiar el medio de transporte (Auto, A pie, Bici) y recalcular ruta
+    // 5. Función para cambiar el medio de transporte (Auto, A pie, Transporte) y recalcular ruta
     // ============================================================
     const changeTransportMode = async (mode: TransportMode) => {
         setTransportMode(mode);
