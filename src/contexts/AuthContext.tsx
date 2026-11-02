@@ -30,6 +30,8 @@ type AuthContextType = {
   recargarUsuario: () => Promise<boolean>;
   /** Envía el correo para restablecer la contraseña. */
   cambiarPassword: (email: string) => Promise<void>;
+  /** Actualiza el nombre para mostrar del usuario. */
+  actualizarNombre: (nuevoNombre: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -99,6 +101,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return verificado;
   };
 
+  
+  // Actualiza el nombre para mostrar del usuario en Firebase Auth.
+  const actualizarNombre = async (nuevoNombre: string) => {
+    const actual = auth.currentUser;
+    if (!actual) throw new Error("No hay una sesión activa.");
+    await updateProfile(actual, { displayName: nuevoNombre.trim() });
+    await actual.reload();
+    setUser({ ...auth.currentUser } as User);
+  };
+
   // Envía el correo de restablecimiento de contraseña.
   const cambiarPassword = async (email: string) => {
     await sendPasswordResetEmail(auth, email);
@@ -116,6 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         verificarEmail,
         recargarUsuario,
         cambiarPassword,
+        actualizarNombre,
       }}
     >
       {children}

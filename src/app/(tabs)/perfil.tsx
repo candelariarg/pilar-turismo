@@ -7,10 +7,16 @@ import {
   Image,
   Alert,
   ScrollView,
+  TextInput,
+  Modal,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
+import { Ionicons } from '@expo/vector-icons';
 import { ThemedView } from '@/src/components/themed-view';
 import { SwipeableScreen } from '@/src/components/swipeable-screen';
 import { AppHeader } from '@/src/components/app-header';
@@ -27,11 +33,17 @@ export default function PerfilScreen() {
     verificarEmail,
     recargarUsuario,
     cambiarPassword,
+    actualizarNombre,
   } = useAuth();
 
   const [imageUrl, setImageurl] = useState<string | null>(null);
   const [mensaje, setMensaje] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+
+  // Estados para modal de editar nombre de usuario
+  const [modalNombreVisible, setModalNombreVisible] = useState(false);
+  const [nuevoNombre, setNuevoNombre] = useState('');
+  const [guardandoNombre, setGuardandoNombre] = useState(false);
 
   const handleToggleLanguage = () => {
     const nextLang = i18n.language.startsWith('es') ? 'en' : 'es';
@@ -53,6 +65,27 @@ export default function PerfilScreen() {
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
       setImageurl(result.assets[0].uri);
+    }
+  };
+
+  /** Guarda el nuevo nombre del usuario en Firebase Auth */
+  const handleGuardarNombre = async () => {
+    const trimmed = nuevoNombre.trim();
+    if (!trimmed) {
+      Alert.alert(t('common.error'), t('profile.nameEmpty'));
+      return;
+    }
+
+    setGuardandoNombre(true);
+    setMensaje(null);
+    try {
+      await actualizarNombre(trimmed);
+      setModalNombreVisible(false);
+      setMensaje(t('profile.nameUpdated'));
+    } catch (e) {
+      Alert.alert(t('common.error'), mensajeDeErrorFirebase(codigoDeError(e), t));
+    } finally {
+      setGuardandoNombre(false);
     }
   };
 
@@ -139,6 +172,10 @@ export default function PerfilScreen() {
     }
   };
 
+  // Nombre para mostrar: displayName, o prefijo del email, o valor por defecto
+  const nombreParaMostrar =
+    user?.displayName || (user?.email ? user.email.split('@')[0] : t('profile.userDefaultName'));
+
   return (
     <ThemedView style={styles.container}>
       <SwipeableScreen currentTab="perfil">
@@ -154,9 +191,23 @@ export default function PerfilScreen() {
                 source={imageUrl ? { uri: imageUrl } : require('@/assets/images/logos/usuario.png')}
                 style={styles.avatarPlaceholder}
               />
-              <Text style={styles.nombreUsuario} numberOfLines={1}>
-                {user?.email ?? t('profile.userDefaultName')}
-              </Text>
+
+              {/* Nombre de usuario con botón de editar */}
+              <View style={styles.nombreContainer}>
+                <Text style={styles.nombreUsuario} numberOfLines={1}>
+                  {nombreParaMostrar}
+                </Text>
+                <TouchableOpacity
+                  style={styles.btnEditarNombreMini}
+                  onPress={() => {
+                    setNuevoNombre(user?.displayName ?? '');
+                    setModalNombreVisible(true);
+                  }}
+                  hitSlop={10}
+                >
+                  <Ionicons name="pencil" size={14} color="#FFFFFF" />
+                </TouchableOpacity>
+              </View>
 
               {/* Botón para cambiar foto */}
               <TouchableOpacity style={styles.botonFoto} onPress={cambiarFotoPerfil}>
@@ -166,6 +217,17 @@ export default function PerfilScreen() {
 
             {/* Opciones de Ajustes */}
             <View style={styles.seccionAjustes}>
+              {/* Cambiar nombre de usuario */}
+              <TouchableOpacity
+                style={styles.botonOpcion}
+                onPress={() => {
+                  setNuevoNombre(user?.displayName ?? '');
+                  setModalNombreVisible(true);
+                }}
+              >
+                <Text style={styles.textoOpcion}>{t('profile.editName')}</Text>
+              </TouchableOpacity>
+
               {/* Estado del correo */}
               <View style={styles.filaEstado}>
                 <Text style={styles.etiquetaEstado}>{t('profile.emailLabel')}</Text>
@@ -222,6 +284,57 @@ export default function PerfilScreen() {
               <Text style={styles.textoSalir}>{t('profile.logout')}</Text>
             </TouchableOpacity>
           </ScrollView>
+
+          {/* Modal para editar nombre de usuario */}
+          <Modal
+            visible={modalNombreVisible}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setModalNombreVisible(false)}
+          >
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+              style={styles.modalFondo}
+            >
+              <View style={styles.modalCard}>
+                <Text style={styles.modalCardTitulo}>{t('profile.editNameTitle')}</Text>
+                <Text style={styles.modalCardSubtitulo}>{t('profile.nameSubtitle')}</Text>
+
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder={t('profile.namePlaceholder')}
+                  placeholderTextColor="#9AAAB6"
+                  value={nuevoNombre}
+                  onChangeText={setNuevoNombre}
+                  autoFocus={true}
+                  maxLength={30}
+                />
+
+                <View style={styles.modalBotonesRow}>
+                  <TouchableOpacity
+                    style={styles.modalBtnCancelar}
+                    onPress={() => setModalNombreVisible(false)}
+                    disabled={guardandoNombre}
+                  >
+                    <Text style={styles.modalBtnCancelarTexto}>{t('common.cancel')}</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.modalBtnGuardar, guardandoNombre && { opacity: 0.7 }]}
+                    onPress={handleGuardarNombre}
+                    disabled={guardandoNombre}
+                  >
+                    {guardandoNombre ? (
+                      <ActivityIndicator color="#FFFFFF" size="small" />
+                    ) : (
+                      <Text style={styles.modalBtnGuardarTexto}>{t('common.save')}</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </KeyboardAvoidingView>
+          </Modal>
+
         </SafeAreaView>
       </SwipeableScreen>
     </ThemedView>
@@ -256,11 +369,24 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
     marginBottom: 12,
   },
+  nombreContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+    paddingHorizontal: 20,
+    gap: 8,
+  },
   nombreUsuario: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 10,
+    maxWidth: '85%',
+  },
+  btnEditarNombreMini: {
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    padding: 6,
+    borderRadius: 14,
   },
   botonFoto: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
@@ -327,5 +453,79 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#EF4444',
+  },
+
+  // Estilos del modal para editar nombre
+  modalFondo: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  modalCardTitulo: {
+    fontSize: 19,
+    fontWeight: 'bold',
+    color: '#1E293B',
+    marginBottom: 6,
+  },
+  modalCardSubtitulo: {
+    fontSize: 13,
+    color: '#64748B',
+    marginBottom: 16,
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#1E293B',
+    backgroundColor: '#F8FAFC',
+    marginBottom: 20,
+  },
+  modalBotonesRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12,
+  },
+  modalBtnCancelar: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalBtnCancelarTexto: {
+    color: '#64748B',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  modalBtnGuardar: {
+    backgroundColor: '#2196F3',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 90,
+  },
+  modalBtnGuardarTexto: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: 'bold',
   },
 });

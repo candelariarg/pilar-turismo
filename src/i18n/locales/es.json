@@ -161,7 +161,13 @@
     "noEmailFound": "No encontramos el email de tu cuenta.",
     "passwordResetMessage": "Te vamos a enviar un correo a {{email}} con un enlace para crear una contraseña nueva.",
     "passwordResetSent": "Listo. Revisá {{email}} y seguí el enlace del correo.",
-    "logoutError": "No pudimos cerrar la sesión. Intentá de nuevo."
+    "logoutError": "No pudimos cerrar la sesión. Intentá de nuevo.",
+    "editName": "Cambiar nombre de usuario",
+    "editNameTitle": "Cambiar nombre",
+    "nameSubtitle": "Ingresá el nombre o apodo que verás en tu perfil:",
+    "namePlaceholder": "Tu nombre o apodo",
+    "nameUpdated": "¡Nombre de usuario actualizado con éxito!",
+    "nameEmpty": "El nombre no puede estar vacío."
   },
   "chat": {
     "title": "Guía Virtual de Pilar",

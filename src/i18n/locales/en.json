@@ -161,7 +161,13 @@
     "noEmailFound": "We could not find your account email.",
     "passwordResetMessage": "We will send an email to {{email}} with a link to create a new password.",
     "passwordResetSent": "Done. Check {{email}} and follow the link in the email.",
-    "logoutError": "Could not log out. Please try again."
+    "logoutError": "Could not log out. Please try again.",
+    "editName": "Change username",
+    "editNameTitle": "Change Name",
+    "nameSubtitle": "Enter the name or nickname you will see on your profile:",
+    "namePlaceholder": "Your name or nickname",
+    "nameUpdated": "Username successfully updated!",
+    "nameEmpty": "Name cannot be empty."
   },
   "chat": {
     "title": "Pilar Virtual Guide",
