@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { AppHeader } from '@/src/components/app-header';
+import { SwipeableScreen } from '@/src/components/swipeable-screen';
 import { Ionicons } from '@expo/vector-icons';
 
 // INTERFACES DE TYPESCRIPT
@@ -225,6 +226,7 @@ export default function ClimaScreen() {
 
   return (
     <View style={styles.mainContainer}>
+      <SwipeableScreen currentTab="clima">
       <SafeAreaView style={styles.safeArea}>
         <AppHeader />
         
@@ -388,6 +390,7 @@ export default function ClimaScreen() {
         </Modal>
 
       </SafeAreaView>
+      </SwipeableScreen>
     </View>
   );
 }

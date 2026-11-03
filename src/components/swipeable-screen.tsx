@@ -1,10 +1,14 @@
 import React, { useRef } from 'react';
-import { View, StyleSheet, PanResponder, StyleProp, ViewStyle } from 'react-native';
+import { View, StyleSheet, PanResponder, StyleProp, ViewStyle, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 
 export type TabRouteName = 'index' | 'mapa' | 'clima' | 'perfil';
 
 const TAB_ORDER: TabRouteName[] = ['index', 'mapa', 'clima', 'perfil'];
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+// Zona de borde (píxeles desde el marco izquierdo o derecho de la pantalla)
+const EDGE_ZONE = 45;
 
 interface SwipeableScreenProps {
   children: React.ReactNode;
@@ -30,10 +34,22 @@ export function SwipeableScreen({ children, currentTab, style }: SwipeableScreen
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, gestureState) => {
-        // Solo capturamos si el movimiento es claramente horizontal
-        // y mayor a 15px, permitiendo que el scroll vertical de FlatList fluya sin interferencias
+        // En la pantalla de Mapa: aplicamos Solución 1 (Edge Swipe)
+        // El gesto DEBE haber comenzado en los primeros 45px del borde izquierdo o derecho.
+        // Si el toque empezó en el centro del mapa, se ignora completamente para que el usuario mueva las calles.
+        if (currentTab === 'mapa') {
+          const startsAtEdge =
+            gestureState.x0 < EDGE_ZONE || gestureState.x0 > SCREEN_WIDTH - EDGE_ZONE;
+          if (!startsAtEdge) {
+            return false;
+          }
+        }
+
+        // Movimiento claramente horizontal para no colisionar con scrolls verticales
         const isHorizontal = Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.5;
-        const hasMovedEnough = Math.abs(gestureState.dx) > 15;
+        const minMove = currentTab === 'mapa' ? 20 : 15;
+        const hasMovedEnough = Math.abs(gestureState.dx) > minMove;
+
         return isHorizontal && hasMovedEnough;
       },
       onPanResponderTerminationRequest: () => false,
@@ -41,13 +57,20 @@ export function SwipeableScreen({ children, currentTab, style }: SwipeableScreen
         const currentIndex = TAB_ORDER.indexOf(currentTab);
         if (currentIndex === -1) return;
 
-        // Deslizamiento hacia la izquierda (dedo se mueve de derecha a izquierda) -> siguiente pestaña
-        const isSwipeLeft =
-          gestureState.dx < -40 || (gestureState.dx < -20 && gestureState.vx < -0.3);
+        // En la pantalla de Mapa: aplicamos Solución 3 (Flick rápido e intencional)
+        // Se exige mayor velocidad y recorrido para evitar cualquier cambio accidental
+        const minDistance = currentTab === 'mapa' ? 60 : 40;
+        const minVelocity = currentTab === 'mapa' ? 0.45 : 0.3;
 
-        // Deslizamiento hacia la derecha (dedo se mueve de izquierda a derecha) -> pestaña anterior
+        // Deslizamiento hacia la izquierda (dedo hacia la izquierda) -> siguiente pestaña
+        const isSwipeLeft =
+          gestureState.dx < -minDistance ||
+          (gestureState.dx < -25 && gestureState.vx < -minVelocity);
+
+        // Deslizamiento hacia la derecha (dedo hacia la derecha) -> pestaña anterior
         const isSwipeRight =
-          gestureState.dx > 40 || (gestureState.dx > 20 && gestureState.vx > 0.3);
+          gestureState.dx > minDistance ||
+          (gestureState.dx > 25 && gestureState.vx > minVelocity);
 
         if (isSwipeLeft && currentIndex < TAB_ORDER.length - 1) {
           goToTab(TAB_ORDER[currentIndex + 1]);
